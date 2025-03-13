@@ -250,29 +250,53 @@ switch ($audit->audit_type) {
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($results['performance_issues'] as $issue) : ?>
+                            <?php 
+                            if (isset($results['performance_issues']) && isset($results['performance_issues']['results']) && is_array($results['performance_issues']['results'])) :
+                                foreach ($results['performance_issues']['results'] as $issue) : 
+                                    if (is_array($issue)) :
+                            ?>
                             <tr>
-                                <td><?php echo esc_html($issue['id']); ?></td>
-                                <td><?php echo esc_html($issue['description']); ?></td>
+                                <td><?php echo isset($issue['id']) ? esc_html($issue['id']) : 'N/A'; ?></td>
+                                <td><?php echo isset($issue['description']) ? esc_html($issue['description']) : 'N/A'; ?></td>
                                 <td>
                                     <?php 
-                                    $location = esc_html($issue['location']);
-                                    if (filter_var($location, FILTER_VALIDATE_URL)) {
-                                        echo '<a href="' . esc_url($location) . '" target="_blank" rel="noopener noreferrer">' . $location . '</a>';
+                                    if (isset($issue['location'])) {
+                                        $location = esc_html($issue['location']);
+                                        if (filter_var($location, FILTER_VALIDATE_URL)) {
+                                            echo '<a href="' . esc_url($location) . '" target="_blank" rel="noopener noreferrer">' . $location . '</a>';
+                                        } else {
+                                            echo $location;
+                                        }
                                     } else {
-                                        echo $location;
+                                        echo 'N/A';
                                     }
                                     ?>
                                 </td>
                                 <td>
-                                    <span class="audit-accessibilite-priority audit-accessibilite-priority-<?php echo esc_attr($issue['priority']); ?>">
-                                        <?php echo esc_html($issue['priority']); ?>
-                                    </span>
+                                    <?php 
+                                    if (isset($issue['priority'])) {
+                                        echo '<span class="audit-accessibilite-priority audit-accessibilite-priority-' . esc_attr($issue['priority']) . '">';
+                                        echo esc_html($issue['priority']); 
+                                        echo '</span>';
+                                    } else {
+                                        echo 'N/A';
+                                    }
+                                    ?>
                                 </td>
-                                <td><?php echo esc_html($issue['status']); ?></td>
-                                <td><?php echo esc_html($issue['solution']); ?></td>
+                                <td><?php echo isset($issue['status']) ? esc_html($issue['status']) : 'N/A'; ?></td>
+                                <td><?php echo isset($issue['solution']) ? esc_html($issue['solution']) : 'N/A'; ?></td>
                             </tr>
-                            <?php endforeach; ?>
+                            <?php 
+                                    else:
+                                        echo '<tr><td colspan="6">Format de données invalide</td></tr>';
+                                    endif;
+                                endforeach;
+                            else :
+                            ?>
+                            <tr>
+                                <td colspan="6"><?php _e('Aucun problème de performance détecté.', 'audit-accessibilite'); ?></td>
+                            </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
