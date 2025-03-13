@@ -55,7 +55,7 @@ class Audit_Accessibilite_RGAA {
             $tests_total = 0;
 
             $this->check_images_alt($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
-            $this->check_contrast($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
+            //$this->check_contrast($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
             $this->check_links_text($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
             $this->check_document_title($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
             $this->check_page_language($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
@@ -104,7 +104,7 @@ class Audit_Accessibilite_RGAA {
         try {
             // Nombre total de critères dans le RGAA 4.1
             // Nombre de critères testés pour l'instant
-            return 6;
+            return 5;
         } catch (Exception $e) {
             error_log('RGAA - Erreur dans get_total_criteria_count: ' . $e->getMessage());
             return 0;
