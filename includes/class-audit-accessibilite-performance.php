@@ -45,7 +45,7 @@ class Audit_Accessibilite_Performance {
         $this->check_css_js_minification($url, $issues, $tests_passed, $tests_total);
         
         // Calculer le score
-        $score = ($tests_total > 0) ? round(($tests_passed / $tests_total) * 100) : 0;
+        $score = ($tests_total > 0) ? max(0, round(($tests_passed / $tests_total) * 100)) : 0;
         
         // Préparer le résultat pour correspondre au format attendu par l'interface
         $formatted_issues = array();

@@ -61,7 +61,7 @@ class Audit_Accessibilite_RGAA {
             $this->check_page_language($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
             $this->check_headings_structure($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
             
-            $score = ($tests_total > 0) ? round(($tests_passed / $tests_total) * 100) : 0;
+            $score = ($tests_total > 0) ? max(0, round(($tests_passed / $tests_total) * 100)) : 0;
             
             $formatted_issues = array();
             foreach ($issues as $issue) {

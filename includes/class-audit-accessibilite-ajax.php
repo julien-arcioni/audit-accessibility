@@ -385,7 +385,7 @@ class Audit_Accessibilite_Ajax {
             }
             
             if ( $tests_total > 0 ) {
-                $score = round( ( $tests_passed / $tests_total ) * 100 );
+                $score = max(0, round( ( $tests_passed / $tests_total ) * 100 ));
             }
 
             // Préparer les données pour la réponse

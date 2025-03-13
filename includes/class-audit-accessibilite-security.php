@@ -33,7 +33,7 @@ class Audit_Accessibilite_Security {
         $this->check_wordpress_version($issues, $tests_passed, $tests_total);
         
         // Calculer le score
-        $score = ($tests_total > 0) ? round(($tests_passed / $tests_total) * 100) : 0;
+        $score = ($tests_total > 0) ? max(0, round(($tests_passed / $tests_total) * 100)) : 0;
         
         // Préparer le résultat pour correspondre au format attendu par l'interface
         $formatted_issues = array();
