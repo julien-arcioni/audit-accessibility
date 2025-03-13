@@ -418,11 +418,17 @@ $options = wp_parse_args($options, $default_options);
         
         $.each(issues, function(index, issue) {
             var priorityClass = 'audit-accessibilite-priority-' + issue.priority;
+            var locationDisplay = issue.location;
+            
+            // Afficher l'URL de la page si elle est disponible
+            if (issue.page_url) {
+                locationDisplay = '<strong>' + issue.page_url + '</strong><br>' + issue.location;
+            }
             
             tableContent += '<tr>';
             tableContent += '<td>' + issue.id + '</td>';
             tableContent += '<td>' + issue.description + '</td>';
-            tableContent += '<td>' + issue.location + '</td>';
+            tableContent += '<td>' + locationDisplay + '</td>';
             tableContent += '<td><span class="audit-accessibilite-priority ' + priorityClass + '">' + issue.priority + '</span></td>';
             tableContent += '<td>' + issue.status + '</td>';
             tableContent += '<td>';

@@ -287,7 +287,12 @@ class Audit_Accessibilite_Ajax {
             // Exécuter les audits sélectionnés
             if ( isset( $form_data['check_rgaa'] ) && $form_data['check_rgaa'] == 1 ) {
                 try {
-                    $rgaa_results = $this->rgaa->run_audit( $target_url, $audit_config );
+                    // Si l'audit concerne le site entier, utiliser run_full_audit
+                    if ($form_data['audit_target'] === 'site') {
+                        $rgaa_results = $this->rgaa->run_full_audit($audit_config);
+                    } else {
+                        $rgaa_results = $this->rgaa->run_audit($target_url, $audit_config);
+                    }
                     $all_results['rgaa_issues'] = $rgaa_results;
                 } catch (Exception $e) {
                     error_log('Erreur lors de l\'audit RGAA: ' . $e->getMessage());
@@ -297,7 +302,12 @@ class Audit_Accessibilite_Ajax {
 
             if ( isset( $form_data['check_seo'] ) && $form_data['check_seo'] == 1 ) {
                 try {
-                    $seo_results = $this->seo->run_audit( $target_url, $audit_config );
+                    // Si l'audit concerne le site entier, utiliser run_full_audit pour SEO également
+                    if ($form_data['audit_target'] === 'site') {
+                        $seo_results = $this->seo->run_full_audit($audit_config);
+                    } else {
+                        $seo_results = $this->seo->run_audit($target_url, $audit_config);
+                    }
                     $all_results['seo_issues'] = $seo_results;
                 } catch (Exception $e) {
                     error_log('Erreur lors de l\'audit SEO: ' . $e->getMessage());
