@@ -1,0 +1,267 @@
+/**
+ * Styles pour l'administration de l'extension Audit Accessibilité
+ *
+ * @since      1.0.0
+ */
+
+/* Styles généraux */
+.audit-accessibilite-admin h1 {
+    margin-bottom: 20px;
+}
+
+.audit-accessibilite-admin h2 {
+    font-size: 1.5em;
+    margin-top: 0;
+}
+
+.audit-accessibilite-admin h3 {
+    font-size: 1.2em;
+    margin-top: 1.5em;
+}
+
+/* Dashboard */
+.audit-accessibilite-dashboard {
+    margin-top: 20px;
+}
+
+.audit-accessibilite-box {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+/* Statistiques */
+.audit-accessibilite-stats {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -10px;
+}
+
+.audit-accessibilite-stat-box {
+    background: #f8f9fa;
+    border: 1px solid #e2e4e7;
+    border-left: 4px solid #2271b1;
+    border-radius: 3px;
+    box-sizing: border-box;
+    margin: 10px;
+    padding: 15px;
+    text-align: center;
+    width: calc(25% - 20px);
+}
+
+.audit-accessibilite-stat-value {
+    color: #1e1e1e;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.audit-accessibilite-stat-label {
+    color: #646970;
+}
+
+/* Boutons */
+.audit-accessibilite-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* Tableau des résultats */
+.audit-accessibilite-results {
+    margin-top: 20px;
+}
+
+.audit-accessibilite-results .priority-high {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.audit-accessibilite-results .priority-medium {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.audit-accessibilite-results .priority-low {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+/* Filtres */
+.audit-accessibilite-filters {
+    background: #f8f9fa;
+    border: 1px solid #e2e4e7;
+    border-radius: 3px;
+    margin-bottom: 20px;
+    padding: 15px;
+}
+
+.audit-accessibilite-filters .form-table {
+    margin-top: 0;
+}
+
+.audit-accessibilite-filters .form-table th {
+    padding: 15px 10px 15px 0;
+    width: 120px;
+}
+
+.audit-accessibilite-filters .form-table td {
+    padding: 10px 10px;
+}
+
+/* Pagination */
+.audit-accessibilite-pagination {
+    margin: 20px 0;
+    text-align: right;
+}
+
+.audit-accessibilite-pagination .page-numbers {
+    background: #f8f9fa;
+    border: 1px solid #e2e4e7;
+    display: inline-block;
+    margin: 0 2px;
+    padding: 4px 10px;
+    text-decoration: none;
+}
+
+.audit-accessibilite-pagination .page-numbers.current {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+}
+
+/* Formulaire de nouvel audit */
+.audit-accessibilite-form {
+    max-width: 800px;
+}
+
+.audit-accessibilite-form .form-table th {
+    width: 200px;
+}
+
+.audit-accessibilite-form .form-table .description {
+    font-style: italic;
+    color: #646970;
+}
+
+/* Résultats d'audit */
+.audit-accessibilite-issue {
+    background: #f8f9fa;
+    border-left: 5px solid #ffc107;
+    margin-bottom: 15px;
+    padding: 15px;
+}
+
+.audit-accessibilite-issue.high {
+    border-left-color: #dc3545;
+}
+
+.audit-accessibilite-issue.medium {
+    border-left-color: #ffc107;
+}
+
+.audit-accessibilite-issue.low {
+    border-left-color: #28a745;
+}
+
+.audit-accessibilite-issue-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.audit-accessibilite-issue-title {
+    font-weight: bold;
+}
+
+.audit-accessibilite-issue-priority {
+    background-color: #ffc107;
+    border-radius: 3px;
+    color: #000;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 8px;
+    text-transform: uppercase;
+}
+
+.audit-accessibilite-issue-priority.high {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.audit-accessibilite-issue-priority.medium {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.audit-accessibilite-issue-priority.low {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.audit-accessibilite-issue-content {
+    margin-bottom: 10px;
+}
+
+.audit-accessibilite-issue-recommendation {
+    background-color: #e3f2fd;
+    border-radius: 3px;
+    padding: 10px;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .audit-accessibilite-stat-box {
+        width: calc(50% - 20px);
+    }
+    
+    .audit-accessibilite-filters .form-table th {
+        display: block;
+        width: auto;
+    }
+    
+    .audit-accessibilite-filters .form-table td {
+        display: block;
+    }
+    
+    .audit-accessibilite-buttons {
+        flex-direction: column;
+    }
+    
+    .audit-accessibilite-buttons .button {
+        margin-bottom: 10px;
+        text-align: center;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .audit-accessibilite-stat-box {
+        width: 100%;
+    }
+}
+
+/* Styles pour la zone de danger (réinitialisation) */
+.audit-accessibilite-danger-zone {
+    border-left: 4px solid #dc3232;
+    background-color: #fcf0f0;
+}
+
+.audit-accessibilite-danger-zone h2 {
+    color: #dc3232;
+}
+
+.button-danger {
+    background-color: #dc3232 !important;
+    border-color: #ba2020 !important;
+    color: #fff !important;
+}
+
+.button-danger:hover {
+    background-color: #ba2020 !important;
+    border-color: #9a1a1a !important;
+}
+
+.button-danger:focus {
+    box-shadow: 0 0 0 1px #fff, 0 0 0 3px #dc3232 !important;
+} 
