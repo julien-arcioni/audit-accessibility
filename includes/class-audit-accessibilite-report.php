@@ -39,18 +39,16 @@ class Audit_Accessibilite_Report {
      * @return   string                URL du rapport généré
      */
     public function generate_report($results, $url) {
-        // Créer le dossier des rapports s'il n'existe pas
+
         $upload_dir = wp_upload_dir();
         $reports_dir = $upload_dir['basedir'] . '/audit-accessibilite-reports';
         
         if (!file_exists($reports_dir)) {
             wp_mkdir_p($reports_dir);
             
-            // Créer un fichier index.php pour protection
             file_put_contents($reports_dir . '/index.php', '<?php // Silence is golden');
         }
         
-        // Générer le nom du fichier
         $date = date('Y-m-d-H-i-s');
         $report_name = 'rapport-accessibilite-' . sanitize_title(parse_url($url, PHP_URL_HOST)) . '-' . $date;
         $report_file = $reports_dir . '/' . $report_name . '.html';
@@ -79,7 +77,7 @@ class Audit_Accessibilite_Report {
         $total_score = 0;
         $scores_count = 0;
         
-        // Compiler les données de tous les types d'audits (RGAA, SEO, Performance, Sécurité)
+        // Compiler les données de tous les types d'audits
         $all_issues = array();
         
         foreach ($results as $audit_type => $audit_results) {

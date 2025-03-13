@@ -12,7 +12,7 @@ if (!defined('WPINC')) {
 
 // Récupérer les options
 $options = get_option('audit_accessibilite_options', array());
-// S'assurer que nous avons des valeurs par défaut si les options n'existent pas
+
 $default_options = array(
     'rgaa_criteria' => true,
     'seo_check' => false,
@@ -259,15 +259,12 @@ $options = wp_parse_args($options, $default_options);
 
 <script>
 (function($) {
-    // Ajouter un message de débogage au chargement
     console.log('Script d\'audit d\'accessibilité chargé');
 
-    // Vérifier que le sélecteur audit_target existe
     if ($('#audit_target').length === 0) {
         console.error('Erreur: Le sélecteur #audit_target n\'existe pas');
     }
 
-    // Vérifier que le sélecteur specific_url_row existe
     if ($('#specific_url_row').length === 0) {
         console.error('Erreur: Le sélecteur #specific_url_row n\'existe pas');
     }
@@ -282,13 +279,10 @@ $options = wp_parse_args($options, $default_options);
         }
     });
     
-    // Appliquer immédiatement la logique pour l'état initial
     if ($('#audit_target').val() === 'page') {
         $('#specific_url_row').show();
     }
     
-    // Force l'affichage du champ URL si l'option page est sélectionnée
-    // C'est un correctif supplémentaire au cas où le code précédent ne fonctionne pas
     setTimeout(function() {
         if ($('#audit_target').val() === 'page') {
             $('#specific_url_row').show();
@@ -340,7 +334,7 @@ $options = wp_parse_args($options, $default_options);
         var formData = $('#audit-accessibilite-options').serialize();
         console.log('Données du formulaire: ', formData);
         
-        // Effectuer la requête AJAX
+        // Requête AJAX
         $.ajax({
             url: ajaxurl,
             type: 'POST',
@@ -352,18 +346,14 @@ $options = wp_parse_args($options, $default_options);
             success: function(response) {
                 console.log('Réponse reçue: ', response);
                 
-                // Masquer le chargement
                 $('.audit-accessibilite-form .spinner').removeClass('is-active');
                 $('.audit-accessibilite-loading').hide();
                 
-                // Réactiver le bouton
                 $('#start-audit').prop('disabled', false);
                 
                 if (response.success) {
-                    // Afficher les résultats
                     displayAuditResults(response.data);
                 } else {
-                    // Afficher l'erreur
                     $('#audit-accessibilite-error').show().find('p').text(
                         response.data && response.data.message 
                             ? response.data.message 
@@ -394,7 +384,6 @@ $options = wp_parse_args($options, $default_options);
     function displayAuditResults(data) {
         console.log('Affichage des résultats: ', data);
         
-        // Masquer le formulaire et afficher les résultats
         $('#audit-accessibilite-form').hide();
         $('#audit-accessibilite-results').show();
         

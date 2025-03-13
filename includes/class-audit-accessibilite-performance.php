@@ -206,10 +206,9 @@ class Audit_Accessibilite_Performance {
     private function check_css_js_minification($url, &$issues, &$tests_passed, &$tests_total) {
         $tests_total++;
         
-        // Cette vérification est simplifiée pour la version initiale
-        // Une vérification plus complète impliquerait de télécharger les fichiers et d'analyser leur contenu
+        // Vérification simplifiée pour la version initiale
+        // TODO: Ajouter une vérification plus complète
         
-        // Pour cette version, nous nous contentons d'un rappel de bonnes pratiques
         $issues[] = array(
             'element_id' => 'minification',
             'element_type' => 'css/js',

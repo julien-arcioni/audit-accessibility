@@ -148,8 +148,7 @@ class Audit_Accessibilite_Assets {
      * @since    1.0.0
      */
     public function enqueue_public_styles() {
-        // Pour l'instant, nous n'avons pas de styles publics
-        // Mais nous pouvons les ajouter plus tard si nécessaire
+
     }
 
     /**
@@ -158,7 +157,6 @@ class Audit_Accessibilite_Assets {
      * @since    1.0.0
      */
     public function enqueue_public_scripts() {
-        // Pour l'instant, nous n'avons pas de scripts publics
-        // Mais nous pouvons les ajouter plus tard si nécessaire
+
     }
 } 

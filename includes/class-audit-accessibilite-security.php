@@ -157,8 +157,9 @@ class Audit_Accessibilite_Security {
         global $wp_version;
         
         // Récupérer la dernière version stable de WordPress
-        // Cette méthode est simplifiée pour la version initiale
-        $latest_wp_version = '6.0'; // À remplacer par une méthode de récupération dynamique dans une version future
+        $latest_wp_version = '6.0';
+
+        // TODO: Vérifier si la version de WordPress est la dernière
         
         if (version_compare($wp_version, $latest_wp_version, '<')) {
             $issues[] = array(

@@ -48,50 +48,33 @@ class Audit_Accessibilite_RGAA {
         // Fusionner la configuration par défaut avec la configuration fournie
         $config = wp_parse_args($config, $default_config);
 
-        // Charger le contenu de la page
         $html = $this->get_page_content($url);
         
         if (!$html) {
-            // Retourner un tableau vide en cas d'erreur
             error_log('RGAA - Impossible de charger le contenu de la page: ' . $url);
             return array();
         }
 
         try {
-            // Créer un DOM à partir du HTML
             $dom = new DOMDocument();
             @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
             $xpath = new DOMXPath($dom);
 
-            // Initialiser les résultats
             $issues = array();
             $tests_passed = 0;
             $tests_total = 0;
 
-            // Pour cette version initiale, nous testons seulement quelques critères essentiels
-            // Thématique 1 : Images
             $this->check_images_alt($dom, $xpath, $issues, $tests_passed, $tests_total);
-            
-            // Thématique 3 : Couleurs
             $this->check_contrast($dom, $xpath, $issues, $tests_passed, $tests_total);
-            
-            // Thématique 6 : Liens
             $this->check_links_text($dom, $xpath, $issues, $tests_passed, $tests_total);
-            
-            // Thématique 8 : Éléments obligatoires
             $this->check_document_title($dom, $xpath, $issues, $tests_passed, $tests_total);
             $this->check_page_language($dom, $xpath, $issues, $tests_passed, $tests_total);
-            
-            // Thématique 9 : Structuration de l'information
             $this->check_headings_structure($dom, $xpath, $issues, $tests_passed, $tests_total);
             
-            // Calculer le score
             $score = ($tests_total > 0) ? round(($tests_passed / $tests_total) * 100) : 0;
             
-            // Préparer le résultat pour correspondre au format attendu par l'interface
             $formatted_issues = array();
             foreach ($issues as $issue) {
-                // Assurer que toutes les clés nécessaires existent
                 $issue_id = isset($issue['id']) ? $issue['id'] : (isset($issue['element_id']) ? $issue['element_id'] : uniqid('rgaa_'));
                 $issue_description = isset($issue['description']) ? $issue['description'] : '';
                 $issue_location = isset($issue['element']) ? $issue['element'] : $url;
@@ -128,9 +111,7 @@ class Audit_Accessibilite_RGAA {
     public function get_total_criteria_count() {
         try {
             // Nombre total de critères dans le RGAA 4.1
-            // Dans notre implémentation actuelle, nous ne testons que 6 critères
-            // Ce nombre devrait correspondre au nombre total de critères testés
-            // et être mis à jour à mesure que nous implémentons plus de tests
+            // Nombre de critères testés pour l'instant
             return 6;
         } catch (Exception $e) {
             error_log('RGAA - Erreur dans get_total_criteria_count: ' . $e->getMessage());
@@ -146,7 +127,6 @@ class Audit_Accessibilite_RGAA {
      * @return   array                Les résultats de l'audit
      */
     public function run_full_audit($config = array()) {
-        // Configuration par défaut
         $default_config = array(
             'max_pages' => 10,
             'crawl_depth' => 2,
@@ -155,16 +135,12 @@ class Audit_Accessibilite_RGAA {
         // Fusionner la configuration par défaut avec la configuration fournie
         $config = wp_parse_args($config, $default_config);
         
-        // URL du site
         $home_url = home_url();
         
-        // Initialiser les résultats
         $all_issues = array();
         
-        // Récupérer la liste des URLs à analyser
         $urls = $this->get_site_urls($home_url, $config['crawl_depth'], $config['max_pages']);
         
-        // Analyser chaque URL
         foreach ($urls as $url) {
             $page_issues = $this->run_audit($url, $config);
             $all_issues = array_merge($all_issues, $page_issues);
@@ -183,8 +159,7 @@ class Audit_Accessibilite_RGAA {
      * @return   array                   La liste des URLs
      */
     private function get_site_urls($start_url, $depth, $max_pages) {
-        // Pour cette version simple, on retourne juste l'URL de départ
-        // Dans une version plus avancée, on pourrait implémenter un crawler
+
         return array($start_url);
     }
 
@@ -262,8 +237,8 @@ class Audit_Accessibilite_RGAA {
     private function check_contrast($dom, $xpath, &$issues, &$tests_passed, &$tests_total) {
         $tests_total++;
         
-        // Pour cette version, nous ajoutons simplement un avertissement général
-        // car l'analyse précise des contrastes nécessite des outils spécifiques
+        // Pour cette version, simple avertissement
+        // TODO: Ajouter une vérification plus poussée
         $issues[] = array(
             'theme' => 3,
             'criterion' => 3.1,

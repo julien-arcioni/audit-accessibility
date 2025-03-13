@@ -17,13 +17,9 @@ class Audit_Accessibilite_Deactivator {
      * @since    1.0.0
      */
     public static function deactivate() {
-        // Supprimer les tâches planifiées
         $timestamp = wp_next_scheduled('audit_accessibilite_cron_hook');
         if ($timestamp) {
             wp_unschedule_event($timestamp, 'audit_accessibilite_cron_hook');
         }
-        
-        // Nous conservons les données en base pour une éventuelle réactivation
-        // Pour les supprimer, il faudra désinstaller complètement l'extension
     }
 } 
