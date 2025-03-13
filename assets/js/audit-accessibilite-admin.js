@@ -102,16 +102,30 @@
 		handleStartAudit: function(e) {
 			e.preventDefault();
 			
+			// Récupérer les données du formulaire
+			const formData = {
+				audit_target: $('#audit_target').val(),
+				specific_url: $('#specific_url').val(),
+				check_rgaa: $('#check_rgaa').is(':checked') ? 1 : 0,
+				check_seo: $('#check_seo').is(':checked') ? 1 : 0,
+				check_performance: $('#check_performance').is(':checked') ? 1 : 0,
+				check_security: $('#check_security').is(':checked') ? 1 : 0,
+				save_report: $('#save_report').is(':checked') ? 1 : 0,
+				email_report: $('#email_report').is(':checked') ? 1 : 0,
+				email_address: $('#email_address').val(),
+				nonce: audit_accessibilite_params.nonce
+			};
+			
 			// Afficher un indicateur de chargement
 			$('.audit-accessibilite-loading').show();
 			
-			// Simuler une requête AJAX pour lancer l'audit
+			// Envoyer la requête AJAX pour lancer l'audit
 			$.ajax({
 				url: audit_accessibilite_params.ajax_url,
 				type: 'POST',
 				data: {
 					action: 'start_accessibility_audit',
-					nonce: audit_accessibilite_params.nonce
+					form_data: formData
 				},
 				success: function(response) {
 					if (response.success) {

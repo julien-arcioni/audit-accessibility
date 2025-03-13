@@ -23,8 +23,6 @@ $default_options = array(
     'scheduled_frequency' => 'weekly',
     'email_notifications' => false,
     'notification_email' => get_option('admin_email'),
-    'max_pages_to_audit' => 10,
-    'audit_depth' => 2,
     'save_html_snapshots' => false,
     'custom_exclusions' => '',
     'last_audit_date' => '',
@@ -47,8 +45,6 @@ if (isset($_POST['audit_accessibilite_settings_submit']) && check_admin_referer(
     $options['scheduled_frequency'] = sanitize_text_field($_POST['scheduled_frequency']);
     $options['email_notifications'] = isset($_POST['email_notifications']) ? 1 : 0;
     $options['notification_email'] = sanitize_email($_POST['notification_email']);
-    $options['max_pages_to_audit'] = intval($_POST['max_pages_to_audit']);
-    $options['audit_depth'] = intval($_POST['audit_depth']);
     $options['save_html_snapshots'] = isset($_POST['save_html_snapshots']) ? 1 : 0;
     $options['custom_exclusions'] = sanitize_textarea_field($_POST['custom_exclusions']);
     
@@ -155,29 +151,6 @@ if (isset($_POST['audit_accessibilite_reset_submit']) && check_admin_referer('au
                             
                             <p class="description"><?php _e('Sélectionnez les types de critères à inclure dans les audits.', 'audit-accessibilite'); ?></p>
                         </fieldset>
-                    </td>
-                </tr>
-                
-                <tr>
-                    <th scope="row"><?php _e('Limites d\'audit', 'audit-accessibilite'); ?></th>
-                    <td>
-                        <label for="max_pages_to_audit">
-                            <?php _e('Nombre maximum de pages à auditer :', 'audit-accessibilite'); ?>
-                            <input type="number" name="max_pages_to_audit" id="max_pages_to_audit" value="<?php echo esc_attr($options['max_pages_to_audit']); ?>" min="1" max="100" class="small-text" />
-                        </label>
-                        <p class="description"><?php _e('Limiter le nombre de pages à auditer pour éviter les audits trop longs.', 'audit-accessibilite'); ?></p>
-                        
-                        <br>
-                        
-                        <label for="audit_depth">
-                            <?php _e('Profondeur d\'audit :', 'audit-accessibilite'); ?>
-                            <select name="audit_depth" id="audit_depth">
-                                <option value="1" <?php selected($options['audit_depth'], 1); ?>><?php _e('1 niveau (page d\'accueil uniquement)', 'audit-accessibilite'); ?></option>
-                                <option value="2" <?php selected($options['audit_depth'], 2); ?>><?php _e('2 niveaux (page d\'accueil + liens directs)', 'audit-accessibilite'); ?></option>
-                                <option value="3" <?php selected($options['audit_depth'], 3); ?>><?php _e('3 niveaux (analyse approfondie)', 'audit-accessibilite'); ?></option>
-                            </select>
-                        </label>
-                        <p class="description"><?php _e('Définit la profondeur de l\'analyse lors d\'un audit de site entier.', 'audit-accessibilite'); ?></p>
                     </td>
                 </tr>
                 

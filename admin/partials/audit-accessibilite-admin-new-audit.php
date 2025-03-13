@@ -18,8 +18,6 @@ $default_options = array(
     'seo_check' => false,
     'performance_check' => false,
     'security_check' => false,
-    'max_pages_to_audit' => 10,
-    'audit_depth' => 2,
     'email_notifications' => false,
     'notification_email' => get_option('admin_email'),
 );
@@ -102,20 +100,6 @@ $options = wp_parse_args($options, $default_options);
                         <td>
                             <fieldset>
                                 <legend class="screen-reader-text"><?php _e('Options avancées', 'audit-accessibilite'); ?></legend>
-                                
-                                <label for="crawl_depth">
-                                    <?php _e('Profondeur d\'analyse :', 'audit-accessibilite'); ?>
-                                    <select name="crawl_depth" id="crawl_depth">
-                                        <option value="1" <?php selected($options['audit_depth'], 1); ?>><?php _e('1 niveau (page d\'accueil uniquement)', 'audit-accessibilite'); ?></option>
-                                        <option value="2" <?php selected($options['audit_depth'], 2); ?>><?php _e('2 niveaux (page d\'accueil + liens directs)', 'audit-accessibilite'); ?></option>
-                                        <option value="3" <?php selected($options['audit_depth'], 3); ?>><?php _e('3 niveaux (analyse approfondie)', 'audit-accessibilite'); ?></option>
-                                    </select>
-                                </label><br>
-                                
-                                <label for="max_pages">
-                                    <?php _e('Nombre maximum de pages à analyser :', 'audit-accessibilite'); ?>
-                                    <input type="number" name="max_pages" id="max_pages" value="<?php echo intval($options['max_pages_to_audit']); ?>" min="1" max="100" class="small-text" />
-                                </label><br>
                                 
                                 <label for="save_report">
                                     <input type="checkbox" name="save_report" id="save_report" value="1" checked />

@@ -213,8 +213,14 @@ class Audit_Accessibilite_Ajax {
      */
     public function run_accessibility_audit() {
         // Activer la journalisation des erreurs pour le débogage
-        ini_set('display_errors', 1);
+        ini_set('display_errors', 0);
         error_reporting(E_ALL);
+        
+        // Définir un gestionnaire d'erreurs personnalisé
+        set_error_handler(function($errno, $errstr, $errfile, $errline) {
+            error_log("Erreur PHP ($errno): $errstr dans $errfile à la ligne $errline");
+            return true; // Ne pas exécuter le gestionnaire d'erreurs interne de PHP
+        });
         
         try {
             // Vérifier le nonce et les capacités
@@ -259,8 +265,6 @@ class Audit_Accessibilite_Ajax {
 
             // Configurer les paramètres d'audit
             $audit_config = array(
-                'max_pages' => isset( $form_data['max_pages'] ) ? intval( $form_data['max_pages'] ) : 10,
-                'crawl_depth' => isset( $form_data['crawl_depth'] ) ? intval( $form_data['crawl_depth'] ) : 2,
                 'save_report' => isset( $form_data['save_report'] ) && $form_data['save_report'] == 1,
                 'email_report' => isset( $form_data['email_report'] ) && $form_data['email_report'] == 1,
                 'email_address' => isset( $form_data['email_address'] ) ? sanitize_email( $form_data['email_address'] ) : '',
@@ -423,6 +427,9 @@ class Audit_Accessibilite_Ajax {
             wp_send_json_error(array(
                 'message' => __('Une erreur inattendue s\'est produite lors de l\'audit.', 'audit-accessibilite') . ' ' . $e->getMessage()
             ));
+        } finally {
+            // Restaurer le gestionnaire d'erreurs par défaut
+            restore_error_handler();
         }
     }
 

@@ -17,10 +17,7 @@ class Audit_Accessibilite_Security {
      */
     public function run_audit($url, $config = array()) {
         // Configuration par défaut
-        $default_config = array(
-            'max_pages' => 10,
-            'crawl_depth' => 2,
-        );
+        $default_config = array();
         
         // Fusionner la configuration par défaut avec la configuration fournie
         $config = wp_parse_args($config, $default_config);
@@ -183,10 +180,7 @@ class Audit_Accessibilite_Security {
      */
     public function run_full_audit($config = array()) {
         try {
-            $default_config = array(
-                'max_pages' => 10,
-                'crawl_depth' => 2,
-            );
+            $default_config = array();
             
             // Fusionner la configuration par défaut avec la configuration fournie
             $config = wp_parse_args($config, $default_config);
@@ -196,7 +190,7 @@ class Audit_Accessibilite_Security {
             $all_issues = array();
             
             // Récupérer les URLs à analyser
-            $urls = $this->get_site_urls($home_url, $config['crawl_depth'], $config['max_pages']);
+            $urls = $this->get_site_urls($home_url);
             
             // Log pour debugging
             error_log('Security - URLs à analyser: ' . print_r($urls, true));
@@ -227,15 +221,12 @@ class Audit_Accessibilite_Security {
      *
      * @since    1.0.0
      * @param    string    $start_url    L'URL de départ
-     * @param    int       $depth        La profondeur de crawl
-     * @param    int       $max_pages    Le nombre maximum de pages à analyser
      * @return   array                   La liste des URLs
      */
-    private function get_site_urls($start_url, $depth, $max_pages) {
+    private function get_site_urls($start_url) {
         $urls = array();
         $visited = array();
         $to_visit = array($start_url);
-        $current_depth = 0;
         
         // Récupérer le domaine du site
         $site_domain = parse_url($start_url, PHP_URL_HOST);
@@ -269,7 +260,7 @@ class Audit_Accessibilite_Security {
             }
         }
         
-        while (!empty($to_visit) && count($urls) < $max_pages) {
+        while (!empty($to_visit)) {
             $current_url = array_shift($to_visit);
             error_log('Security - Analyse de l\'URL : ' . $current_url);
             
@@ -298,37 +289,32 @@ class Audit_Accessibilite_Security {
             $visited[] = $current_url;
             error_log('Security - URL ajoutée aux résultats : ' . $current_url);
             
-            // Si on n'a pas atteint la profondeur maximale, extraire les liens
-            if ($current_depth < $depth - 1) {
-                try {
-                    $dom = new DOMDocument();
-                    @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
-                    $xpath = new DOMXPath($dom);
+            try {
+                $dom = new DOMDocument();
+                @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+                $xpath = new DOMXPath($dom);
+                
+                // Récupérer tous les liens
+                $links = $xpath->query('//a[@href]');
+                foreach ($links as $link) {
+                    $href = $link->getAttribute('href');
                     
-                    // Récupérer tous les liens
-                    $links = $xpath->query('//a[@href]');
-                    foreach ($links as $link) {
-                        $href = $link->getAttribute('href');
-                        
-                        // Convertir les URLs relatives en URLs absolues
-                        if (strpos($href, 'http') !== 0) {
-                            $href = $this->make_absolute_url($href, $current_url);
-                        }
-                        
-                        // Vérifier que l'URL est valide et appartient au même domaine
-                        if ($this->is_valid_url($href) && parse_url($href, PHP_URL_HOST) === $site_domain) {
-                            if (!in_array($href, $visited) && !in_array($href, $to_visit)) {
-                                $to_visit[] = $href;
-                                error_log('Security - Nouvelle URL trouvée : ' . $href);
-                            }
+                    // Convertir les URLs relatives en URLs absolues
+                    if (strpos($href, 'http') !== 0) {
+                        $href = $this->make_absolute_url($href, $current_url);
+                    }
+                    
+                    // Vérifier que l'URL est valide et appartient au même domaine
+                    if ($this->is_valid_url($href) && parse_url($href, PHP_URL_HOST) === $site_domain) {
+                        if (!in_array($href, $visited) && !in_array($href, $to_visit)) {
+                            $to_visit[] = $href;
+                            error_log('Security - Nouvelle URL trouvée : ' . $href);
                         }
                     }
-                } catch (Exception $e) {
-                    error_log('Security - Erreur lors de l\'extraction des liens : ' . $e->getMessage());
                 }
+            } catch (Exception $e) {
+                error_log('Security - Erreur lors de l\'extraction des liens : ' . $e->getMessage());
             }
-            
-            $current_depth++;
         }
         
         error_log('Security - Total des URLs trouvées : ' . count($urls));
