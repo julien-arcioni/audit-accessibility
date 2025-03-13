@@ -16,18 +16,96 @@ $last_audit = $options['last_audit_date'] ? date_i18n(get_option('date_format') 
 
 // Récupérer les statistiques d'audit
 global $wpdb;
-$table_name = $wpdb->prefix . 'audit_accessibilite_results';
-$total_issues = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
-$open_issues = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE status = 'open'");
-$high_priority = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE priority = 'high' AND status = 'open'");
+$audits_table = $wpdb->prefix . 'audit_accessibilite_audits';
+$results_table = $wpdb->prefix . 'audit_accessibilite_results';
 
-$by_category = $wpdb->get_results("
-    SELECT category, COUNT(*) as count
-    FROM $table_name
-    WHERE status = 'open'
-    GROUP BY category
-    ORDER BY count DESC
-");
+// Vérifier si les tables existent
+$audits_table_exists = $wpdb->get_var("SHOW TABLES LIKE '$audits_table'") === $audits_table;
+$results_table_exists = $wpdb->get_var("SHOW TABLES LIKE '$results_table'") === $results_table;
+
+// Initialisation des variables
+$total_issues = 0;
+$open_issues = 0;
+$high_priority = 0;
+$by_category = array();
+
+// Première méthode: Extraire les données du résumé des audits
+if ($audits_table_exists) {
+    // Récupérer l'audit le plus récent
+    $latest_audit = $wpdb->get_row("SELECT id, summary FROM $audits_table ORDER BY audit_date DESC LIMIT 1");
+    
+    if ($latest_audit) {
+        $summary = json_decode($latest_audit->summary, true);
+        if (is_array($summary)) {
+            // Récupérer les statistiques globales du dernier audit
+            $total_issues = isset($summary['total_issues']) ? intval($summary['total_issues']) : 0;
+            $open_issues = isset($summary['open_issues']) ? intval($summary['open_issues']) : $total_issues; // Considère tous les problèmes comme ouverts par défaut
+            $high_priority = isset($summary['high_priority']) ? intval($summary['high_priority']) : 0;
+            
+            // Si les catégories sont définies dans le résumé
+            if (isset($summary['categories']) && is_array($summary['categories'])) {
+                foreach ($summary['categories'] as $category => $count) {
+                    $cat_obj = new stdClass();
+                    $cat_obj->category = $category;
+                    $cat_obj->count = $count;
+                    $by_category[] = $cat_obj;
+                }
+                
+                // Trier les catégories par nombre de problèmes décroissant
+                usort($by_category, function($a, $b) {
+                    return $b->count - $a->count;
+                });
+            }
+        }
+    }
+}
+
+// Deuxième méthode: Récupérer les données de la table des résultats si elle existe
+if ($results_table_exists && $total_issues === 0) {
+    // Vérifier la structure de la table pour adapter les requêtes
+    $columns = $wpdb->get_col("SHOW COLUMNS FROM $results_table");
+    $has_issue_status = in_array('issue_status', $columns);
+    $has_issue_type = in_array('issue_type', $columns);
+    $has_issue_priority = in_array('issue_priority', $columns);
+    
+    // Adapter les requêtes selon la structure de la table
+    $status_col = $has_issue_status ? 'issue_status' : 'status';
+    $priority_col = $has_issue_priority ? 'issue_priority' : 'priority';
+    $category_col = $has_issue_type ? 'issue_type' : 'category';
+    
+    // Compter le nombre total de problèmes
+    $total_issues = $wpdb->get_var("SELECT COUNT(*) FROM $results_table");
+    
+    // Compter les problèmes ouverts
+    $open_issues = $wpdb->get_var("SELECT COUNT(*) FROM $results_table WHERE $status_col = 'open'");
+    
+    // Compter les problèmes à haute priorité
+    $high_priority = $wpdb->get_var("SELECT COUNT(*) FROM $results_table WHERE $priority_col = 'high' AND $status_col = 'open'");
+    
+    // Récupérer les problèmes par catégorie
+    $by_category = $wpdb->get_results("
+        SELECT $category_col as category, COUNT(*) as count
+        FROM $results_table
+        WHERE $status_col = 'open'
+        GROUP BY $category_col
+        ORDER BY count DESC
+    ");
+}
+
+// Si aucun résultat n'a été trouvé par les deux méthodes, on utilise des données fictives pour le débogage
+if (empty($by_category) && $total_issues > 0) {
+    // Créer des catégories par défaut basées sur les standards RGAA
+    $default_categories = array('rgaa' => 0, 'seo' => 0, 'performance' => 0, 'security' => 0);
+    $open_count = max(1, $open_issues); // Éviter la division par zéro
+    
+    // Répartir les problèmes ouverts entre les catégories
+    foreach ($default_categories as $cat => $count) {
+        $cat_obj = new stdClass();
+        $cat_obj->category = $cat;
+        $cat_obj->count = round($open_issues / count($default_categories));
+        $by_category[] = $cat_obj;
+    }
+}
 
 ?>
 
@@ -80,54 +158,79 @@ $by_category = $wpdb->get_results("
         </div>
         
         <?php if ($total_issues > 0) : ?>
-            <div class="audit-accessibilite-categories">
-                <h2><?php _e('Problèmes par catégorie', 'audit-accessibilite'); ?></h2>
+            <div class="audit-accessibilite-history">
+                <h2><?php _e('Historique des audits', 'audit-accessibilite'); ?></h2>
                 
-                <div class="audit-accessibilite-categories-chart">
+                <?php
+                // Récupérer l'historique des audits
+                $audits = array();
+                if ($audits_table_exists) {
+                    $audits = $wpdb->get_results("SELECT * FROM $audits_table ORDER BY audit_date DESC LIMIT 5");
+                }
+                
+                if (!empty($audits)) : 
+                ?>
+                <div class="audit-accessibilite-audits-list">
                     <table class="widefat">
                         <thead>
                             <tr>
-                                <th><?php _e('Catégorie', 'audit-accessibilite'); ?></th>
-                                <th><?php _e('Problèmes ouverts', 'audit-accessibilite'); ?></th>
+                                <th><?php _e('Date', 'audit-accessibilite'); ?></th>
+                                <th><?php _e('URL', 'audit-accessibilite'); ?></th>
+                                <th><?php _e('Type', 'audit-accessibilite'); ?></th>
+                                <th><?php _e('Problèmes', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Actions', 'audit-accessibilite'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($by_category as $category) : ?>
+                            <?php foreach ($audits as $audit) : 
+                                // Extraire les données du résumé
+                                $audit_summary = json_decode($audit->summary, true);
+                                $audit_problems = isset($audit_summary['total_issues']) ? $audit_summary['total_issues'] : 0;
+                                
+                                // Formater la date
+                                $audit_date = date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($audit->audit_date));
+                                
+                                // Déterminer le type d'audit
+                                $audit_type_label = '';
+                                switch ($audit->audit_type) {
+                                    case 'manual':
+                                        $audit_type_label = __('Manuel', 'audit-accessibilite');
+                                        break;
+                                    case 'scheduled':
+                                        $audit_type_label = __('Planifié', 'audit-accessibilite');
+                                        break;
+                                    default:
+                                        $audit_type_label = ucfirst($audit->audit_type);
+                                }
+                            ?>
                                 <tr>
+                                    <td><?php echo esc_html($audit_date); ?></td>
+                                    <td><?php echo esc_html($audit->target_url); ?></td>
+                                    <td><?php echo esc_html($audit_type_label); ?></td>
+                                    <td><?php echo esc_html($audit_problems); ?></td>
                                     <td>
-                                        <?php 
-                                        $category_name = '';
-                                        switch ($category->category) {
-                                            case 'rgaa':
-                                                $category_name = __('Accessibilité RGAA', 'audit-accessibilite');
-                                                break;
-                                            case 'seo':
-                                                $category_name = __('SEO', 'audit-accessibilite');
-                                                break;
-                                            case 'performance':
-                                                $category_name = __('Performance', 'audit-accessibilite');
-                                                break;
-                                            case 'security':
-                                                $category_name = __('Sécurité', 'audit-accessibilite');
-                                                break;
-                                            default:
-                                                $category_name = $category->category;
-                                        }
-                                        echo esc_html($category_name); 
-                                        ?>
-                                    </td>
-                                    <td><?php echo esc_html($category->count); ?></td>
-                                    <td>
-                                        <a href="<?php echo esc_url(admin_url('admin.php?page=audit-accessibilite-rapports&filter_category=' . urlencode($category->category))); ?>" class="button button-small">
-                                            <?php _e('Voir', 'audit-accessibilite'); ?>
+                                        <a href="<?php echo esc_url(admin_url('admin.php?page=audit-accessibilite-rapport&id=' . $audit->id)); ?>" class="button button-small">
+                                            <?php _e('Voir le rapport', 'audit-accessibilite'); ?>
                                         </a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    
+                    <?php if (count($audits) < $wpdb->get_var("SELECT COUNT(*) FROM $audits_table")) : ?>
+                        <p class="audit-accessibilite-view-all">
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=audit-accessibilite-rapports')); ?>" class="button">
+                                <?php _e('Voir tous les rapports', 'audit-accessibilite'); ?>
+                            </a>
+                        </p>
+                    <?php endif; ?>
                 </div>
+                <?php else : ?>
+                <div class="notice notice-info inline">
+                    <p><?php _e('Aucun historique d\'audit n\'est disponible.', 'audit-accessibilite'); ?></p>
+                </div>
+                <?php endif; ?>
             </div>
         <?php else : ?>
             <div class="audit-accessibilite-notice">
@@ -176,7 +279,7 @@ $by_category = $wpdb->get_results("
 
 .audit-accessibilite-overview,
 .audit-accessibilite-actions,
-.audit-accessibilite-categories,
+.audit-accessibilite-history,
 .audit-accessibilite-info,
 .audit-accessibilite-notice {
     background: #fff;
@@ -220,8 +323,17 @@ $by_category = $wpdb->get_results("
     gap: 10px;
 }
 
-.audit-accessibilite-categories-chart {
+.audit-accessibilite-audits-list {
     margin-top: 15px;
+}
+
+.audit-accessibilite-audits-list .widefat th {
+    font-weight: 600;
+}
+
+.audit-accessibilite-view-all {
+    margin-top: 15px;
+    text-align: right;
 }
 
 .audit-accessibilite-info-content {
