@@ -236,11 +236,8 @@ if ($table_exists) {
     color: #000;
 }
 
-.audit-accessibilite-score-fill[style*="width: 4"],
-.audit-accessibilite-score-fill[style*="width: 3"],
-.audit-accessibilite-score-fill[style*="width: 2"],
-.audit-accessibilite-score-fill[style*="width: 1"] {
-    background-color: #dc3545;
+.audit-accessibilite-score-fill[style*="width: 100"] {
+    background-color:rgb(15, 142, 18);
 }
 
 .audit-accessibilite-priority {
