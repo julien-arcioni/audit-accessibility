@@ -59,33 +59,6 @@ if ($table_exists) {
                 </p>
             </div>
         <?php else : ?>
-            <div class="audit-accessibilite-filters">
-                <form method="get" action="">
-                    <input type="hidden" name="page" value="<?php echo esc_attr($_GET['page']); ?>">
-                    
-                    <div class="audit-accessibilite-filter">
-                        <label for="filter_date"><?php _e('Filtrer par date :', 'audit-accessibilite'); ?></label>
-                        <select name="filter_date" id="filter_date">
-                            <option value=""><?php _e('Toutes les dates', 'audit-accessibilite'); ?></option>
-                            <option value="today" <?php selected(isset($_GET['filter_date']) && $_GET['filter_date'] === 'today'); ?>><?php _e('Aujourd\'hui', 'audit-accessibilite'); ?></option>
-                            <option value="week" <?php selected(isset($_GET['filter_date']) && $_GET['filter_date'] === 'week'); ?>><?php _e('Cette semaine', 'audit-accessibilite'); ?></option>
-                            <option value="month" <?php selected(isset($_GET['filter_date']) && $_GET['filter_date'] === 'month'); ?>><?php _e('Ce mois-ci', 'audit-accessibilite'); ?></option>
-                        </select>
-                    </div>
-                    
-                    <div class="audit-accessibilite-filter">
-                        <label for="filter_type"><?php _e('Type d\'audit :', 'audit-accessibilite'); ?></label>
-                        <select name="filter_type" id="filter_type">
-                            <option value=""><?php _e('Tous les types', 'audit-accessibilite'); ?></option>
-                            <option value="manual" <?php selected(isset($_GET['filter_type']) && $_GET['filter_type'] === 'manual'); ?>><?php _e('Manuel', 'audit-accessibilite'); ?></option>
-                            <option value="scheduled" <?php selected(isset($_GET['filter_type']) && $_GET['filter_type'] === 'scheduled'); ?>><?php _e('Planifié', 'audit-accessibilite'); ?></option>
-                        </select>
-                    </div>
-                    
-                    <button type="submit" class="button"><?php _e('Filtrer', 'audit-accessibilite'); ?></button>
-                </form>
-            </div>
-            
             <table class="widefat audit-accessibilite-reports-table">
                 <thead>
                     <tr>
@@ -234,23 +207,6 @@ if ($table_exists) {
 </div>
 
 <style>
-.audit-accessibilite-filters {
-    margin-bottom: 20px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    align-items: center;
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 3px;
-}
-
-.audit-accessibilite-filter {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
 .audit-accessibilite-reports-table {
     margin-top: 15px;
 }
