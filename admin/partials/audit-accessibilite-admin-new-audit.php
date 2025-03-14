@@ -129,116 +129,6 @@ $options = wp_parse_args($options, $default_options);
             </form>
         </div>
     </div>
-    
-    <div id="audit-accessibilite-results" class="audit-accessibilite-box audit-accessibilite-results" style="display: none;">
-        <h2><?php _e('Résultats de l\'audit', 'audit-accessibilite'); ?></h2>
-        
-        <div class="audit-accessibilite-stats">
-            <div class="audit-accessibilite-stat-box">
-                <div class="audit-accessibilite-stat-value audit-accessibilite-total-issues">0</div>
-                <div class="audit-accessibilite-stat-label"><?php _e('Problèmes détectés', 'audit-accessibilite'); ?></div>
-            </div>
-            
-            <div class="audit-accessibilite-stat-box">
-                <div class="audit-accessibilite-stat-value audit-accessibilite-open-issues">0</div>
-                <div class="audit-accessibilite-stat-label"><?php _e('Problèmes ouverts', 'audit-accessibilite'); ?></div>
-            </div>
-            
-            <div class="audit-accessibilite-stat-box">
-                <div class="audit-accessibilite-stat-value audit-accessibilite-high-priority">0</div>
-                <div class="audit-accessibilite-stat-label"><?php _e('Priorité élevée', 'audit-accessibilite'); ?></div>
-            </div>
-            
-            <div class="audit-accessibilite-stat-box">
-                <div class="audit-accessibilite-stat-value audit-accessibilite-score">0%</div>
-                <div class="audit-accessibilite-stat-label"><?php _e('Score global', 'audit-accessibilite'); ?></div>
-            </div>
-        </div>
-        
-        <div class="audit-accessibilite-tabs">
-            <div class="audit-accessibilite-tab-buttons">
-                <button type="button" class="audit-accessibilite-tab-button active" data-tab="audit-rgaa-tab">
-                    <?php _e('Accessibilité (RGAA)', 'audit-accessibilite'); ?>
-                </button>
-                <button type="button" class="audit-accessibilite-tab-button" data-tab="audit-seo-tab">
-                    <?php _e('SEO', 'audit-accessibilite'); ?>
-                </button>
-                <button type="button" class="audit-accessibilite-tab-button" data-tab="audit-performance-tab">
-                    <?php _e('Performance', 'audit-accessibilite'); ?>
-                </button>
-                <button type="button" class="audit-accessibilite-tab-button" data-tab="audit-security-tab">
-                    <?php _e('Sécurité', 'audit-accessibilite'); ?>
-                </button>
-            </div>
-            
-            <div class="audit-accessibilite-tab-content active" id="audit-rgaa-tab">
-                <div class="audit-accessibilite-filters">
-                    <div class="audit-accessibilite-filter">
-                        <label for="rgaa-filter"><?php _e('Filtrer les résultats :', 'audit-accessibilite'); ?></label>
-                        <input type="text" id="rgaa-filter" class="audit-accessibilite-filter-input" placeholder="<?php esc_attr_e('Rechercher...', 'audit-accessibilite'); ?>">
-                    </div>
-                    <div class="audit-accessibilite-filter">
-                        <select id="rgaa-priority-filter">
-                            <option value=""><?php _e('Toutes les priorités', 'audit-accessibilite'); ?></option>
-                            <option value="high"><?php _e('Priorité haute', 'audit-accessibilite'); ?></option>
-                            <option value="medium"><?php _e('Priorité moyenne', 'audit-accessibilite'); ?></option>
-                            <option value="low"><?php _e('Priorité basse', 'audit-accessibilite'); ?></option>
-                        </select>
-                    </div>
-                </div>
-                
-                <table class="widefat audit-accessibilite-results-table">
-                    <thead>
-                        <tr>
-                            <th><?php _e('ID', 'audit-accessibilite'); ?></th>
-                            <th><?php _e('Problème', 'audit-accessibilite'); ?></th>
-                            <th><?php _e('Emplacement', 'audit-accessibilite'); ?></th>
-                            <th><?php _e('Priorité', 'audit-accessibilite'); ?></th>
-                            <th><?php _e('Statut', 'audit-accessibilite'); ?></th>
-                            <th><?php _e('Actions', 'audit-accessibilite'); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="6"><?php _e('Aucun résultat disponible', 'audit-accessibilite'); ?></td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <div class="audit-accessibilite-pagination">
-                    <!-- La pagination sera ajoutée dynamiquement en JavaScript -->
-                </div>
-            </div>
-            
-            <div class="audit-accessibilite-tab-content" id="audit-seo-tab">
-                <p><?php _e('Les résultats SEO seront affichés ici.', 'audit-accessibilite'); ?></p>
-                <!-- Contenu similaire au tableau RGAA -->
-            </div>
-            
-            <div class="audit-accessibilite-tab-content" id="audit-performance-tab">
-                <p><?php _e('Les résultats de performance seront affichés ici.', 'audit-accessibilite'); ?></p>
-                <!-- Contenu similaire au tableau RGAA -->
-            </div>
-            
-            <div class="audit-accessibilite-tab-content" id="audit-security-tab">
-                <p><?php _e('Les résultats de sécurité seront affichés ici.', 'audit-accessibilite'); ?></p>
-                <!-- Contenu similaire au tableau RGAA -->
-            </div>
-        </div>
-        
-        <div class="audit-accessibilite-export">
-            <h3><?php _e('Exporter les résultats', 'audit-accessibilite'); ?></h3>
-            <button type="button" class="button audit-accessibilite-export-pdf">
-                <?php _e('Exporter en PDF', 'audit-accessibilite'); ?>
-            </button>
-            <button type="button" class="button audit-accessibilite-export-csv">
-                <?php _e('Exporter en CSV', 'audit-accessibilite'); ?>
-            </button>
-            <a href="<?php echo esc_url(admin_url('admin.php?page=audit-accessibilite-rapports')); ?>" class="button">
-                <?php _e('Voir tous les rapports', 'audit-accessibilite'); ?>
-            </a>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -287,19 +177,6 @@ $options = wp_parse_args($options, $default_options);
         $('#email_field').show();
     }
     
-    // Gérer les onglets de résultats
-    $('.audit-accessibilite-tab-button').on('click', function() {
-        var tabId = $(this).data('tab');
-        
-        // Activer l'onglet sélectionné
-        $('.audit-accessibilite-tab-button').removeClass('active');
-        $(this).addClass('active');
-        
-        // Afficher le contenu correspondant
-        $('.audit-accessibilite-tab-content').removeClass('active');
-        $('#' + tabId).addClass('active');
-    });
-    
     // Lancer l'audit
     $('#start-audit').on('click', function() {
         console.log('Démarrage de l\'audit');
@@ -336,7 +213,12 @@ $options = wp_parse_args($options, $default_options);
                 $('#start-audit').prop('disabled', false);
                 
                 if (response.success) {
-                    displayAuditResults(response.data);
+                    if (response.data && response.data.audit_id) {
+                        var baseUrl = '<?php echo admin_url('admin.php?page=audit-accessibilite-rapport'); ?>';
+                        window.location.href = baseUrl + '&id=' + response.data.audit_id;
+                    } else {
+                        window.location.href = '<?php echo esc_url(admin_url('admin.php?page=audit-accessibilite-rapports')); ?>';
+                    }
                 } else {
                     $('#audit-accessibilite-error').show().find('p').text(
                         response.data && response.data.message 
@@ -363,68 +245,6 @@ $options = wp_parse_args($options, $default_options);
             }
         });
     });
-    
-    // Fonction pour afficher les résultats
-    function displayAuditResults(data) {
-        console.log('Affichage des résultats: ', data);
-        
-        $('#audit-accessibilite-form').hide();
-        $('#audit-accessibilite-results').show();
-        
-        // Remplir les statistiques
-        $('.audit-accessibilite-total-issues').text(data.total_issues || 0);
-        $('.audit-accessibilite-open-issues').text(data.open_issues || 0);
-        $('.audit-accessibilite-high-priority').text(data.high_priority || 0);
-        $('.audit-accessibilite-score').text((data.score || 0) + '%');
-        
-        // Remplir les tableaux de résultats pour chaque type d'audit
-        if (data.rgaa_issues && data.rgaa_issues.length > 0) {
-            fillResultsTable('rgaa', data.rgaa_issues);
-        }
-        
-        if (data.seo_issues && data.seo_issues.length > 0) {
-            fillResultsTable('seo', data.seo_issues);
-        }
-        
-        if (data.performance_issues && data.performance_issues.length > 0) {
-            fillResultsTable('performance', data.performance_issues);
-        }
-        
-        if (data.security_issues && data.security_issues.length > 0) {
-            fillResultsTable('security', data.security_issues);
-        }
-    }
-    
-    // Fonction pour remplir un tableau de résultats
-    function fillResultsTable(type, issues) {
-        var tableId = '#audit-' + type + '-tab table tbody';
-        var tableContent = '';
-        
-        $.each(issues, function(index, issue) {
-            var priorityClass = 'audit-accessibilite-priority-' + issue.priority;
-            var locationDisplay = issue.location;
-            
-            // Afficher l'URL de la page si elle est disponible
-            if (issue.page_url) {
-                locationDisplay = '<strong>' + issue.page_url + '</strong><br>' + issue.location;
-            }
-            
-            tableContent += '<tr>';
-            tableContent += '<td>' + issue.id + '</td>';
-            tableContent += '<td>' + issue.description + '</td>';
-            tableContent += '<td>' + locationDisplay + '</td>';
-            tableContent += '<td><span class="audit-accessibilite-priority ' + priorityClass + '">' + issue.priority + '</span></td>';
-            tableContent += '<td>' + issue.status + '</td>';
-            tableContent += '<td>';
-            tableContent += '<button type="button" class="button button-small" data-issue-id="' + issue.id + '">';
-            tableContent += '<?php _e('Détails', 'audit-accessibilite'); ?>';
-            tableContent += '</button>';
-            tableContent += '</td>';
-            tableContent += '</tr>';
-        });
-        
-        $(tableId).html(tableContent);
-    }
 })(jQuery);
 </script>
 
@@ -452,89 +272,5 @@ $options = wp_parse_args($options, $default_options);
 
 .audit-accessibilite-submit {
     margin-top: 20px;
-}
-
-.audit-accessibilite-tabs {
-    margin-top: 20px;
-}
-
-.audit-accessibilite-tab-buttons {
-    margin-bottom: 15px;
-    border-bottom: 1px solid #ccd0d4;
-    padding-bottom: 0;
-}
-
-.audit-accessibilite-tab-button {
-    padding: 10px 15px;
-    background: #f8f9fa;
-    border: 1px solid #ccd0d4;
-    border-bottom: none;
-    cursor: pointer;
-    margin-right: 5px;
-    margin-bottom: -1px;
-}
-
-.audit-accessibilite-tab-button.active {
-    background: #fff;
-    border-bottom: 1px solid #fff;
-}
-
-.audit-accessibilite-tab-content {
-    display: none;
-    padding: 20px;
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-top: none;
-}
-
-.audit-accessibilite-tab-content.active {
-    display: block;
-}
-
-.audit-accessibilite-filters {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    align-items: center;
-}
-
-.audit-accessibilite-filter {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.audit-accessibilite-export {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #ccd0d4;
-}
-
-.audit-accessibilite-export .button {
-    margin-right: 10px;
-}
-
-/* Priorités dans le tableau des résultats */
-.audit-accessibilite-priority {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.audit-accessibilite-priority-high {
-    background-color: #dc3545;
-    color: #fff;
-}
-
-.audit-accessibilite-priority-medium {
-    background-color: #ffc107;
-    color: #000;
-}
-
-.audit-accessibilite-priority-low {
-    background-color: #28a745;
-    color: #fff;
 }
 </style> 
