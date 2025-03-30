@@ -31,7 +31,9 @@ class Audit_Accessibilite_Performance {
 
         // Créer un DOM à partir du HTML
         $dom = new DOMDocument();
-        @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+        $dom->validateOnParse = true;
+        $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>' . htmlspecialchars($html, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '</body></html>';
+        @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING);
         $xpath = new DOMXPath($dom);
 
         // Initialiser les résultats
@@ -335,7 +337,9 @@ class Audit_Accessibilite_Performance {
             
             try {
                 $dom = new DOMDocument();
-                @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+                $dom->validateOnParse = true;
+                $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>' . htmlspecialchars($html, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '</body></html>';
+                @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING);
                 $xpath = new DOMXPath($dom);
                 
                 // Récupérer tous les liens

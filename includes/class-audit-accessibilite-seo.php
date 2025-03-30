@@ -33,7 +33,10 @@ class Audit_Accessibilite_SEO {
 
             // Créer un DOM à partir du HTML
             $dom = new DOMDocument();
-            @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+            $dom->validateOnParse = true;
+            libxml_use_internal_errors(true);
+            @$dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING);
+            libxml_clear_errors();
             $xpath = new DOMXPath($dom);
 
             // Initialiser les résultats
@@ -194,7 +197,10 @@ class Audit_Accessibilite_SEO {
             
             try {
                 $dom = new DOMDocument();
-                @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+                $dom->validateOnParse = true;
+                libxml_use_internal_errors(true);
+                @$dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING);
+                libxml_clear_errors();
                 $xpath = new DOMXPath($dom);
                 
                 // Récupérer tous les liens
