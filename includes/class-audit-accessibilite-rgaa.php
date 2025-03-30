@@ -47,19 +47,38 @@ class Audit_Accessibilite_RGAA {
 
         try {
             $dom = new DOMDocument();
-            @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+            $dom->validateOnParse = true;
+            $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>' . htmlspecialchars($html, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '</body></html>';
+            @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING);
             $xpath = new DOMXPath($dom);
 
             $issues = array();
             $tests_passed = 0;
             $tests_total = 0;
 
+            // Vérification des images
             $this->check_images_alt($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
+            
+            // Vérification des contrastes
             //$this->check_contrast($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
+            
+            // Vérification des liens
             $this->check_links_text($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
+            
+            // Vérification du titre du document
             $this->check_document_title($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
+            
+            // Vérification de la langue
             $this->check_page_language($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
+            
+            // Vérification de la structure des titres
             $this->check_headings_structure($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
+            
+            // Vérification des formulaires
+            $this->check_forms($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
+            
+            // Vérification des tableaux
+            $this->check_tables($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
             
             $score = ($tests_total > 0) ? max(0, round(($tests_passed / $tests_total) * 100)) : 0;
             
@@ -118,6 +137,7 @@ class Audit_Accessibilite_RGAA {
      * @return   array                Les résultats de l'audit
      */
     public function run_full_audit() {
+        error_log('RGAA - Début de l\'audit complet du site');
         $home_url = home_url();
         $all_issues = array();
         
@@ -208,7 +228,9 @@ class Audit_Accessibilite_RGAA {
             // Extraire tous les liens de la page
             try {
                 $dom = new DOMDocument();
-                @$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+                $dom->validateOnParse = true;
+                $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>' . htmlspecialchars($html, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '</body></html>';
+                @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING);
                 $xpath = new DOMXPath($dom);
                 
                 // Récupérer tous les liens
@@ -460,6 +482,20 @@ class Audit_Accessibilite_RGAA {
         
         $html = $dom->getElementsByTagName('html')->item(0);
         
+        if (!$html) {
+            $issues[] = array(
+                'theme' => 8,
+                'criterion' => 8.3,
+                'element_id' => 'html_tag',
+                'element_type' => 'html',
+                'description' => __('La balise HTML est manquante.', 'audit-accessibilite'),
+                'priority' => 'high',
+                'recommendation' => __('Ajouter une balise html valide avec l\'attribut lang.', 'audit-accessibilite'),
+                'page_url' => $page_url
+            );
+            return;
+        }
+        
         if (!$html->hasAttribute('lang')) {
             $issues[] = array(
                 'theme' => 8,
@@ -469,7 +505,7 @@ class Audit_Accessibilite_RGAA {
                 'description' => __('La langue de la page n\'est pas définie.', 'audit-accessibilite'),
                 'priority' => 'high',
                 'recommendation' => __('Ajouter l\'attribut lang à la balise html, par exemple : <html lang="fr">.', 'audit-accessibilite'),
-                'page_url' => $page_url // Ajouter l'URL de la page
+                'page_url' => $page_url
             );
         } else {
             $lang = $html->getAttribute('lang');
@@ -483,7 +519,18 @@ class Audit_Accessibilite_RGAA {
                     'description' => __('L\'attribut lang de la page est présent mais vide.', 'audit-accessibilite'),
                     'priority' => 'high',
                     'recommendation' => __('Définir correctement la valeur de l\'attribut lang (par exemple "fr" pour le français).', 'audit-accessibilite'),
-                    'page_url' => $page_url // Ajouter l'URL de la page
+                    'page_url' => $page_url
+                );
+            } else if (strtolower($lang) === 'fr-FR') {
+                $issues[] = array(
+                    'theme' => 8,
+                    'criterion' => 8.3,
+                    'element_id' => 'html_lang',
+                    'element_type' => 'html',
+                    'description' => __('L\'attribut lang utilise "fr-FR" au lieu de "fr".', 'audit-accessibilite'),
+                    'priority' => 'low',
+                    'recommendation' => __('Utiliser "fr" comme valeur de l\'attribut lang pour le français.', 'audit-accessibilite'),
+                    'page_url' => $page_url
                 );
             } else {
                 $tests_passed++;
@@ -574,6 +621,76 @@ class Audit_Accessibilite_RGAA {
         // Si aucun problème trouvé, test réussi
         if (count($issues) === $tests_total - 1) {
             $tests_passed++;
+        }
+    }
+
+    /**
+     * Vérifie la présence de formulaires (RGAA 11.1)
+     *
+     * @since    1.0.0
+     * @param    DOMDocument    $dom           L'objet DOM de la page
+     * @param    DOMXPath       $xpath         L'objet XPath pour les requêtes
+     * @param    array          &$issues       Référence au tableau des problèmes
+     * @param    int            &$tests_passed Référence au compteur de tests réussis
+     * @param    int            &$tests_total  Référence au compteur de tests total
+     */
+    private function check_forms($dom, $xpath, &$issues, &$tests_passed, &$tests_total, $page_url = '') {
+        $forms = $xpath->query('//form');
+        
+        foreach ($forms as $form) {
+            $tests_total++;
+            
+            $element_id = !empty($form->getAttribute('id')) ? $form->getAttribute('id') : md5($form->getAttribute('name'));
+            
+            if (empty($form->getAttribute('name'))) {
+                $issues[] = array(
+                    'theme' => 11,
+                    'criterion' => 11.1,
+                    'element_id' => $element_id,
+                    'element_type' => 'form',
+                    'description' => __('Le formulaire n\'a pas d\'attribut name.', 'audit-accessibilite'),
+                    'priority' => 'medium',
+                    'recommendation' => __('Ajouter un attribut name à ce formulaire.', 'audit-accessibilite'),
+                    'page_url' => $page_url // Ajouter l'URL de la page
+                );
+            } else {
+                $tests_passed++;
+            }
+        }
+    }
+
+    /**
+     * Vérifie la présence de tableaux (RGAA 12.1)
+     *
+     * @since    1.0.0
+     * @param    DOMDocument    $dom           L'objet DOM de la page
+     * @param    DOMXPath       $xpath         L'objet XPath pour les requêtes
+     * @param    array          &$issues       Référence au tableau des problèmes
+     * @param    int            &$tests_passed Référence au compteur de tests réussis
+     * @param    int            &$tests_total  Référence au compteur de tests total
+     */
+    private function check_tables($dom, $xpath, &$issues, &$tests_passed, &$tests_total, $page_url = '') {
+        $tables = $xpath->query('//table');
+        
+        foreach ($tables as $table) {
+            $tests_total++;
+            
+            $element_id = !empty($table->getAttribute('id')) ? $table->getAttribute('id') : md5($table->getAttribute('name'));
+            
+            if (empty($table->getAttribute('name'))) {
+                $issues[] = array(
+                    'theme' => 12,
+                    'criterion' => 12.1,
+                    'element_id' => $element_id,
+                    'element_type' => 'table',
+                    'description' => __('Le tableau n\'a pas d\'attribut name.', 'audit-accessibilite'),
+                    'priority' => 'medium',
+                    'recommendation' => __('Ajouter un attribut name à ce tableau.', 'audit-accessibilite'),
+                    'page_url' => $page_url // Ajouter l'URL de la page
+                );
+            } else {
+                $tests_passed++;
+            }
         }
     }
 }
