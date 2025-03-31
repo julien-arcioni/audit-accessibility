@@ -106,7 +106,7 @@ class Audit_Accessibilite_SEO {
                 $page_issues = $this->run_audit($url, $config);
                 
                 // Log pour debugging
-                error_log('SEO - Page analysée: ' . $url . ' - Problèmes trouvés: ' . count($page_issues));
+                //error_log('SEO - Page analysée: ' . $url . ' - Problèmes trouvés: ' . count($page_issues));
                 
                 // Ajouter les problèmes de cette page au tableau global
                 $all_issues = array_merge($all_issues, $page_issues);
