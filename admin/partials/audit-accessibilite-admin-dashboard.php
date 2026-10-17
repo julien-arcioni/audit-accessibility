@@ -291,31 +291,36 @@ if (empty($by_category) && $total_issues > 0) {
 
 .audit-accessibilite-stats {
     display: flex;
-    flex-wrap: wrap;
-    margin: 0 -10px;
+    flex-wrap: nowrap;
+    margin: 0 -5px;
+    align-items: stretch;
 }
 
 .audit-accessibilite-stat-box {
     background: #f8f9fa;
     border: 1px solid #e2e4e7;
-    border-left: 4px solid #2271b1;
+    border-left: 4px solid var(--wp-admin-theme-color, #2271b1);
     border-radius: 3px;
     box-sizing: border-box;
-    margin: 10px;
-    padding: 15px;
+    margin: 0 5px;
+    padding: 10px 8px;
     text-align: center;
-    width: calc(25% - 20px);
+    flex: 1;
+    min-width: 0;
 }
 
 .audit-accessibilite-stat-value {
     color: #1e1e1e;
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: 3px;
+    line-height: 1.2;
 }
 
 .audit-accessibilite-stat-label {
     color: #646970;
+    font-size: 11px;
+    line-height: 1.3;
 }
 
 .audit-accessibilite-buttons {

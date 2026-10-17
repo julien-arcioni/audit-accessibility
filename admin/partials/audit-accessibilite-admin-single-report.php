@@ -10,6 +10,89 @@ if (!defined('WPINC')) {
     die;
 }
 
+// Fonction pour afficher la priorité en français
+function audit_accessibilite_libelle_priorite($priority) {
+    $libelles = array(
+        'high'   => __('Élevée', 'audit-accessibilite'),
+        'medium' => __('Moyenne', 'audit-accessibilite'),
+        'low'    => __('Faible', 'audit-accessibilite'),
+    );
+    return isset($libelles[$priority]) ? $libelles[$priority] : $priority;
+}
+
+// Fonction pour afficher le statut en français
+function audit_accessibilite_libelle_statut($status) {
+    $libelles = array(
+        'open'    => __('Ouvert', 'audit-accessibilite'),
+        'fixed'   => __('Corrigé', 'audit-accessibilite'),
+        'ignored' => __('Ignoré', 'audit-accessibilite'),
+    );
+    return isset($libelles[$status]) ? $libelles[$status] : $status;
+}
+
+// Fonction pour déterminer l'impact utilisateur selon le type de problème
+function get_user_impact($issue_description, $issue_type = 'rgaa') {
+    $description_lower = strtolower($issue_description);
+    
+    // Impacts pour les problèmes d'accessibilité
+    if ($issue_type === 'rgaa') {
+        if (strpos($description_lower, 'alt') !== false || strpos($description_lower, 'image') !== false) {
+            return __('Mauvaise compréhension ou perte d\'informations pour les personnes utilisant des lecteurs d\'écrans', 'audit-accessibilite');
+        }
+        if (strpos($description_lower, 'contraste') !== false) {
+            return __('Difficultés de lecture pour les personnes avec une déficience visuelle', 'audit-accessibilite');
+        }
+        if (strpos($description_lower, 'navigation') !== false || strpos($description_lower, 'menu') !== false) {
+            return __('Difficultés de navigation pour les personnes utilisant le clavier ou les technologies d\'assistance', 'audit-accessibilite');
+        }
+        if (strpos($description_lower, 'formulaire') !== false || strpos($description_lower, 'label') !== false) {
+            return __('Difficultés de saisie et de compréhension des formulaires', 'audit-accessibilite');
+        }
+        if (strpos($description_lower, 'titre') !== false || strpos($description_lower, 'heading') !== false) {
+            return __('Difficultés de compréhension de la structure de la page', 'audit-accessibilite');
+        }
+        if (strpos($description_lower, 'lien') !== false || strpos($description_lower, 'link') !== false) {
+            return __('Difficultés de compréhension de la destination des liens', 'audit-accessibilite');
+        }
+        if (strpos($description_lower, 'couleur') !== false) {
+            return __('Informations inaccessibles aux personnes daltoniennes ou malvoyantes', 'audit-accessibilite');
+        }
+        if (strpos($description_lower, 'vidéo') !== false || strpos($description_lower, 'audio') !== false) {
+            return __('Contenu multimédia inaccessible aux personnes sourdes ou malentendantes', 'audit-accessibilite');
+        }
+        return __('Barrière d\'accessibilité pouvant affecter les personnes en situation de handicap', 'audit-accessibilite');
+    }
+    
+    // Impacts pour les problèmes SEO
+    if ($issue_type === 'seo') {
+        if (strpos($description_lower, 'meta') !== false) {
+            return __('Diminution de la visibilité dans les résultats de recherche', 'audit-accessibilite');
+        }
+        if (strpos($description_lower, 'title') !== false || strpos($description_lower, 'titre') !== false) {
+            return __('Moins bonne compréhension du contenu par les moteurs de recherche', 'audit-accessibilite');
+        }
+        return __('Impact négatif sur le référencement naturel', 'audit-accessibilite');
+    }
+    
+    // Impacts pour les problèmes de performance
+    if ($issue_type === 'performance') {
+        if (strpos($description_lower, 'image') !== false || strpos($description_lower, 'optimisation') !== false) {
+            return __('Ralentissement du chargement, frustration des utilisateurs', 'audit-accessibilite');
+        }
+        if (strpos($description_lower, 'cache') !== false) {
+            return __('Temps de chargement plus long, expérience utilisateur dégradée', 'audit-accessibilite');
+        }
+        return __('Dégradation de l\'expérience utilisateur et performances réduites', 'audit-accessibilite');
+    }
+    
+    // Impacts pour les problèmes de sécurité
+    if ($issue_type === 'security') {
+        return __('Risque de sécurité pour les utilisateurs et leurs données', 'audit-accessibilite');
+    }
+    
+    return __('Impact sur l\'expérience utilisateur', 'audit-accessibilite');
+}
+
 // Vérifier que l'ID de l'audit est fourni
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     wp_die(__('Rapport non trouvé. Veuillez retourner à la liste des rapports.', 'audit-accessibilite'));
@@ -82,9 +165,9 @@ switch ($audit->audit_type) {
                 <button type="button" class="button audit-accessibilite-export-pdf" data-id="<?php echo esc_attr($audit_id); ?>">
                     <?php _e('Exporter en PDF', 'audit-accessibilite'); ?>
                 </button>
-                <button type="button" class="button audit-accessibilite-export-csv" data-id="<?php echo esc_attr($audit_id); ?>">
+                <?php /* <button type="button" class="button audit-accessibilite-export-csv" data-id="<?php echo esc_attr($audit_id); ?>">
                     <?php _e('Exporter en CSV', 'audit-accessibilite'); ?>
-                </button>
+                </button> */ ?>
             </div>
         </div>
     </div>
@@ -153,18 +236,17 @@ switch ($audit->audit_type) {
                     <table class="widefat audit-accessibilite-issues-table">
                         <thead>
                             <tr>
-                                <th><?php _e('ID', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Description', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Localisation', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Priorité', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Statut', 'audit-accessibilite'); ?></th>
+                                <th><?php _e('Impact utilisateur', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Solution', 'audit-accessibilite'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($results['rgaa_issues'] as $issue) : ?>
                             <tr>
-                                <td><?php echo esc_html($issue['id']); ?></td>
                                 <td><?php echo esc_html($issue['description']); ?></td>
                                 <td>
                                     <?php 
@@ -178,10 +260,11 @@ switch ($audit->audit_type) {
                                 </td>
                                 <td>
                                     <span class="audit-accessibilite-priority audit-accessibilite-priority-<?php echo esc_attr($issue['priority']); ?>">
-                                        <?php echo esc_html($issue['priority']); ?>
+                                        <?php echo esc_html(audit_accessibilite_libelle_priorite($issue['priority'])); ?>
                                     </span>
                                 </td>
-                                <td><?php echo esc_html($issue['status']); ?></td>
+                                <td><?php echo esc_html(audit_accessibilite_libelle_statut($issue['status'])); ?></td>
+                                <td><?php echo esc_html(get_user_impact($issue['description'], 'rgaa')); ?></td>
                                 <td><?php echo esc_html($issue['solution']); ?></td>
                             </tr>
                             <?php endforeach; ?>
@@ -197,18 +280,17 @@ switch ($audit->audit_type) {
                     <table class="widefat audit-accessibilite-issues-table">
                         <thead>
                             <tr>
-                                <th><?php _e('ID', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Description', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Localisation', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Priorité', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Statut', 'audit-accessibilite'); ?></th>
+                                <th><?php _e('Impact utilisateur', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Solution', 'audit-accessibilite'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($results['seo_issues'] as $issue) : ?>
                             <tr>
-                                <td><?php echo esc_html($issue['id']); ?></td>
                                 <td><?php echo esc_html($issue['description']); ?></td>
                                 <td>
                                     <?php 
@@ -222,10 +304,11 @@ switch ($audit->audit_type) {
                                 </td>
                                 <td>
                                     <span class="audit-accessibilite-priority audit-accessibilite-priority-<?php echo esc_attr($issue['priority']); ?>">
-                                        <?php echo esc_html($issue['priority']); ?>
+                                        <?php echo esc_html(audit_accessibilite_libelle_priorite($issue['priority'])); ?>
                                     </span>
                                 </td>
-                                <td><?php echo esc_html($issue['status']); ?></td>
+                                <td><?php echo esc_html(audit_accessibilite_libelle_statut($issue['status'])); ?></td>
+                                <td><?php echo esc_html(get_user_impact($issue['description'], 'seo')); ?></td>
                                 <td><?php echo esc_html($issue['solution']); ?></td>
                             </tr>
                             <?php endforeach; ?>
@@ -241,11 +324,11 @@ switch ($audit->audit_type) {
                     <table class="widefat audit-accessibilite-issues-table">
                         <thead>
                             <tr>
-                                <th><?php _e('ID', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Description', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Localisation', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Priorité', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Statut', 'audit-accessibilite'); ?></th>
+                                <th><?php _e('Impact utilisateur', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Solution', 'audit-accessibilite'); ?></th>
                             </tr>
                         </thead>
@@ -256,7 +339,6 @@ switch ($audit->audit_type) {
                                     if (is_array($issue)) :
                             ?>
                             <tr>
-                                <td><?php echo isset($issue['id']) ? esc_html($issue['id']) : 'N/A'; ?></td>
                                 <td><?php echo isset($issue['description']) ? esc_html($issue['description']) : 'N/A'; ?></td>
                                 <td>
                                     <?php 
@@ -276,14 +358,15 @@ switch ($audit->audit_type) {
                                     <?php 
                                     if (isset($issue['priority'])) {
                                         echo '<span class="audit-accessibilite-priority audit-accessibilite-priority-' . esc_attr($issue['priority']) . '">';
-                                        echo esc_html($issue['priority']); 
+                                        echo esc_html(audit_accessibilite_libelle_priorite($issue['priority'])); 
                                         echo '</span>';
                                     } else {
                                         echo 'N/A';
                                     }
                                     ?>
                                 </td>
-                                <td><?php echo isset($issue['status']) ? esc_html($issue['status']) : 'N/A'; ?></td>
+                                <td><?php echo isset($issue['status']) ? esc_html(audit_accessibilite_libelle_statut($issue['status'])) : 'N/A'; ?></td>
+                                <td><?php echo isset($issue['description']) ? esc_html(get_user_impact($issue['description'], 'performance')) : 'N/A'; ?></td>
                                 <td><?php echo isset($issue['solution']) ? esc_html($issue['solution']) : 'N/A'; ?></td>
                             </tr>
                             <?php 
@@ -309,18 +392,17 @@ switch ($audit->audit_type) {
                     <table class="widefat audit-accessibilite-issues-table">
                         <thead>
                             <tr>
-                                <th><?php _e('ID', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Description', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Localisation', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Priorité', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Statut', 'audit-accessibilite'); ?></th>
+                                <th><?php _e('Impact utilisateur', 'audit-accessibilite'); ?></th>
                                 <th><?php _e('Solution', 'audit-accessibilite'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($results['security_issues'] as $issue) : ?>
                             <tr>
-                                <td><?php echo esc_html($issue['id']); ?></td>
                                 <td><?php echo esc_html($issue['description']); ?></td>
                                 <td>
                                     <?php 
@@ -334,10 +416,11 @@ switch ($audit->audit_type) {
                                 </td>
                                 <td>
                                     <span class="audit-accessibilite-priority audit-accessibilite-priority-<?php echo esc_attr($issue['priority']); ?>">
-                                        <?php echo esc_html($issue['priority']); ?>
+                                        <?php echo esc_html(audit_accessibilite_libelle_priorite($issue['priority'])); ?>
                                     </span>
                                 </td>
-                                <td><?php echo esc_html($issue['status']); ?></td>
+                                <td><?php echo esc_html(audit_accessibilite_libelle_statut($issue['status'])); ?></td>
+                                <td><?php echo esc_html(get_user_impact($issue['description'], 'security')); ?></td>
                                 <td><?php echo esc_html($issue['solution']); ?></td>
                             </tr>
                             <?php endforeach; ?>
@@ -396,7 +479,8 @@ switch ($audit->audit_type) {
         });
     });
     
-    // Gestion de l'export CSV
+    // Gestion de l'export CSV - Temporairement désactivé
+    /*
     $('.audit-accessibilite-export-csv').on('click', function() {
         var auditId = $(this).data('id');
         
@@ -420,6 +504,7 @@ switch ($audit->audit_type) {
             }
         });
     });
+    */
 })(jQuery);
 </script>
 
@@ -479,17 +564,17 @@ switch ($audit->audit_type) {
 }
 
 .audit-accessibilite-priority-high {
-    background-color: #f44336;
+    background-color: #d63638;
     color: #ffffff;
 }
 
 .audit-accessibilite-priority-medium {
-    background-color: #ff9800;
-    color: #ffffff;
+    background-color: #dba617;
+    color: #1d2327;
 }
 
 .audit-accessibilite-priority-low {
-    background-color: #4caf50;
+    background-color: #00a32a;
     color: #ffffff;
 }
 </style> 

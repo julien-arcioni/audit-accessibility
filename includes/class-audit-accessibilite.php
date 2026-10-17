@@ -154,6 +154,8 @@ class Audit_Accessibilite {
         // Nouvelles classes
         require_once AUDIT_ACCESSIBILITE_PLUGIN_DIR . 'includes/class-audit-accessibilite-assets.php';
         require_once AUDIT_ACCESSIBILITE_PLUGIN_DIR . 'includes/class-audit-accessibilite-ajax.php';
+        require_once AUDIT_ACCESSIBILITE_PLUGIN_DIR . 'includes/class-audit-accessibilite-catalogue.php';
+        require_once AUDIT_ACCESSIBILITE_PLUGIN_DIR . 'includes/class-audit-accessibilite-widget.php';
 
         $this->loader = new Audit_Accessibilite_Loader();
     }
@@ -174,6 +176,7 @@ class Audit_Accessibilite {
         
         // Initialiser les nouvelles classes
         $this->assets = new Audit_Accessibilite_Assets($this->get_plugin_name(), $this->get_version(), $this->loader);
+        new Audit_Accessibilite_Widget($this->get_plugin_name(), $this->get_version(), $this->loader);
         $this->ajax = new Audit_Accessibilite_Ajax(
             $this->get_plugin_name(), 
             $this->get_version(), 

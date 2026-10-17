@@ -107,7 +107,7 @@
 				audit_target: $('#audit_target').val(),
 				specific_url: $('#specific_url').val(),
 				check_rgaa: $('#check_rgaa').is(':checked') ? 1 : 0,
-				check_seo: $('#check_seo').is(':checked') ? 1 : 0,
+				// check_seo: $('#check_seo').is(':checked') ? 1 : 0, // TODO : désactivé
 				check_performance: $('#check_performance').is(':checked') ? 1 : 0,
 				check_security: $('#check_security').is(':checked') ? 1 : 0,
 				save_report: $('#save_report').is(':checked') ? 1 : 0,
@@ -163,16 +163,49 @@
 			if (data.issues && data.issues.length > 0) {
 				$.each(data.issues, function(index, issue) {
 					const priorityClass = 'audit-accessibilite-priority-' + issue.priority.toLowerCase();
+					
+					// Fonction pour déterminer l'impact utilisateur
+					const getUserImpact = function(description) {
+						const desc = description.toLowerCase();
+						if (desc.includes('alt') || desc.includes('image')) {
+							return 'Mauvaise compréhension ou perte d\'informations pour les personnes utilisant des lecteurs d\'écrans';
+						}
+						if (desc.includes('contraste')) {
+							return 'Difficultés de lecture pour les personnes avec une déficience visuelle';
+						}
+						if (desc.includes('navigation') || desc.includes('menu')) {
+							return 'Difficultés de navigation pour les personnes utilisant le clavier ou les technologies d\'assistance';
+						}
+						if (desc.includes('formulaire') || desc.includes('label')) {
+							return 'Difficultés de saisie et de compréhension des formulaires';
+						}
+						if (desc.includes('titre') || desc.includes('heading')) {
+							return 'Difficultés de compréhension de la structure de la page';
+						}
+						if (desc.includes('lien') || desc.includes('link')) {
+							return 'Difficultés de compréhension de la destination des liens';
+						}
+						if (desc.includes('couleur')) {
+							return 'Informations inaccessibles aux personnes daltoniennes ou malvoyantes';
+						}
+						if (desc.includes('vidéo') || desc.includes('audio')) {
+							return 'Contenu multimédia inaccessible aux personnes sourdes ou malentendantes';
+						}
+						return 'Barrière d\'accessibilité pouvant affecter les personnes en situation de handicap';
+					};
+					
+					const userImpact = getUserImpact(issue.description);
+					
 					const row = `
 						<tr class="audit-accessibilite-result-item ${priorityClass}">
-							<td>${issue.id}</td>
 							<td>${issue.description}</td>
 							<td>${issue.location}</td>
 							<td><span class="audit-accessibilite-priority ${priorityClass}">${issue.priority}</span></td>
 							<td>${issue.status}</td>
+							<td>${userImpact}</td>
 							<td>
-								<button class="audit-accessibilite-action-button" data-action="fix" data-id="${issue.id}">Corriger</button>
-								<button class="audit-accessibilite-action-button" data-action="ignore" data-id="${issue.id}">Ignorer</button>
+								<button class="audit-accessibilite-action-button" data-action="fix" data-id="${issue.id || index}">Corriger</button>
+								<button class="audit-accessibilite-action-button" data-action="ignore" data-id="${issue.id || index}">Ignorer</button>
 							</td>
 						</tr>
 					`;

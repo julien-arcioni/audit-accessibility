@@ -1,267 +1,147 @@
 /**
  * Styles pour l'administration de l'extension Audit Accessibilité
  *
+ * Reprend les composants natifs de WordPress (wrap, widefat, button,
+ * form-table, notice) : ce fichier ne gère que la mise en page propre
+ * à l'extension, avec la couleur du thème de l'administration.
+ *
  * @since      1.0.0
  */
 
-/* Styles généraux */
+/* Titres */
 .audit-accessibilite-admin h1 {
     margin-bottom: 20px;
 }
 
 .audit-accessibilite-admin h2 {
-    font-size: 1.5em;
+    font-size: 1.3em;
     margin-top: 0;
 }
 
 .audit-accessibilite-admin h3 {
-    font-size: 1.2em;
+    font-size: 1.1em;
     margin-top: 1.5em;
 }
 
-/* Dashboard */
-.audit-accessibilite-dashboard {
-    margin-top: 20px;
-}
-
+/* Boîtes (aspect des boîtes natives, comme .postbox) */
 .audit-accessibilite-box {
     background: #fff;
-    border: 1px solid #ccd0d4;
-    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    border: 1px solid #c3c4c7;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
     margin-bottom: 20px;
     padding: 20px;
 }
 
 /* Statistiques */
 .audit-accessibilite-stats {
-    display: flex;
-    flex-wrap: wrap;
-    margin: 0 -10px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
 }
 
 .audit-accessibilite-stat-box {
-    background: #f8f9fa;
-    border: 1px solid #e2e4e7;
-    border-left: 4px solid #2271b1;
-    border-radius: 3px;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-left: 4px solid var(--wp-admin-theme-color, #2271b1);
     box-sizing: border-box;
-    margin: 10px;
-    padding: 15px;
+    margin: 0;
+    padding: 12px 10px;
     text-align: center;
-    width: calc(25% - 20px);
 }
 
 .audit-accessibilite-stat-value {
-    color: #1e1e1e;
-    font-size: 28px;
+    color: #1d2327;
+    font-size: 20px;
     font-weight: 600;
-    margin-bottom: 5px;
+    line-height: 1.2;
+    margin-bottom: 4px;
 }
 
 .audit-accessibilite-stat-label {
     color: #646970;
+    font-size: 12px;
+    line-height: 1.4;
 }
 
 /* Boutons */
 .audit-accessibilite-buttons {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
 }
 
-/* Tableau des résultats */
-.audit-accessibilite-results {
-    margin-top: 20px;
-}
-
-.audit-accessibilite-results .priority-high {
-    background-color: #f8d7da;
-    color: #721c24;
-}
-
-.audit-accessibilite-results .priority-medium {
-    background-color: #fff3cd;
-    color: #856404;
-}
-
-.audit-accessibilite-results .priority-low {
-    background-color: #d4edda;
-    color: #155724;
-}
-
-/* Filtres */
-.audit-accessibilite-filters {
-    background: #f8f9fa;
-    border: 1px solid #e2e4e7;
-    border-radius: 3px;
-    margin-bottom: 20px;
-    padding: 15px;
-}
-
-.audit-accessibilite-filters .form-table {
-    margin-top: 0;
-}
-
-.audit-accessibilite-filters .form-table th {
-    padding: 15px 10px 15px 0;
-    width: 120px;
-}
-
-.audit-accessibilite-filters .form-table td {
-    padding: 10px 10px;
-}
-
-/* Pagination */
-.audit-accessibilite-pagination {
-    margin: 20px 0;
-    text-align: right;
-}
-
-.audit-accessibilite-pagination .page-numbers {
-    background: #f8f9fa;
-    border: 1px solid #e2e4e7;
-    display: inline-block;
-    margin: 0 2px;
-    padding: 4px 10px;
-    text-decoration: none;
-}
-
-.audit-accessibilite-pagination .page-numbers.current {
-    background: #2271b1;
-    border-color: #2271b1;
-    color: #fff;
-}
-
-/* Formulaire de nouvel audit */
-.audit-accessibilite-form {
-    max-width: 800px;
-}
-
+/* Formulaires */
 .audit-accessibilite-form .form-table th {
     width: 200px;
 }
 
-.audit-accessibilite-form .form-table .description {
-    font-style: italic;
-    color: #646970;
-}
-
-/* Résultats d'audit */
+/* Problèmes détectés */
 .audit-accessibilite-issue {
-    background: #f8f9fa;
-    border-left: 5px solid #ffc107;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-left: 4px solid #dba617;
     margin-bottom: 15px;
-    padding: 15px;
+    padding: 12px 15px;
 }
 
 .audit-accessibilite-issue.high {
-    border-left-color: #dc3545;
+    border-left-color: #d63638;
 }
 
 .audit-accessibilite-issue.medium {
-    border-left-color: #ffc107;
+    border-left-color: #dba617;
 }
 
 .audit-accessibilite-issue.low {
-    border-left-color: #28a745;
+    border-left-color: #00a32a;
 }
 
 .audit-accessibilite-issue-header {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
     margin-bottom: 10px;
 }
 
 .audit-accessibilite-issue-title {
-    font-weight: bold;
-}
-
-.audit-accessibilite-issue-priority {
-    background-color: #ffc107;
-    border-radius: 3px;
-    color: #000;
-    font-size: 12px;
     font-weight: 600;
-    padding: 3px 8px;
-    text-transform: uppercase;
-}
-
-.audit-accessibilite-issue-priority.high {
-    background-color: #dc3545;
-    color: #fff;
-}
-
-.audit-accessibilite-issue-priority.medium {
-    background-color: #ffc107;
-    color: #000;
-}
-
-.audit-accessibilite-issue-priority.low {
-    background-color: #28a745;
-    color: #fff;
-}
-
-.audit-accessibilite-issue-content {
-    margin-bottom: 10px;
 }
 
 .audit-accessibilite-issue-recommendation {
-    background-color: #e3f2fd;
-    border-radius: 3px;
-    padding: 10px;
+    background: #f6f7f7;
+    border-left: 4px solid var(--wp-admin-theme-color, #2271b1);
+    margin-top: 10px;
+    padding: 10px 12px;
+}
+
+/* Chargement */
+.audit-accessibilite-loading {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-left: 4px solid var(--wp-admin-theme-color, #2271b1);
+    margin: 15px 0;
+    padding: 15px 20px;
 }
 
 /* Responsive */
 @media screen and (max-width: 782px) {
-    .audit-accessibilite-stat-box {
-        width: calc(50% - 20px);
+    .audit-accessibilite-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    
-    .audit-accessibilite-filters .form-table th {
-        display: block;
-        width: auto;
-    }
-    
-    .audit-accessibilite-filters .form-table td {
-        display: block;
-    }
-    
+
     .audit-accessibilite-buttons {
         flex-direction: column;
     }
-    
-    .audit-accessibilite-buttons .button {
-        margin-bottom: 10px;
-        text-align: center;
+
+    .audit-accessibilite-form .form-table th {
+        width: auto;
     }
 }
 
 @media screen and (max-width: 480px) {
-    .audit-accessibilite-stat-box {
-        width: 100%;
+    .audit-accessibilite-stats {
+        grid-template-columns: 1fr;
     }
 }
-
-/* Styles pour la zone de danger (réinitialisation) */
-.audit-accessibilite-danger-zone {
-    border-left: 4px solid #dc3232;
-    background-color: #fcf0f0;
-}
-
-.audit-accessibilite-danger-zone h2 {
-    color: #dc3232;
-}
-
-.button-danger {
-    background-color: #dc3232 !important;
-    border-color: #ba2020 !important;
-    color: #fff !important;
-}
-
-.button-danger:hover {
-    background-color: #ba2020 !important;
-    border-color: #9a1a1a !important;
-}
-
-.button-danger:focus {
-    box-shadow: 0 0 0 1px #fff, 0 0 0 3px #dc3232 !important;
-} 

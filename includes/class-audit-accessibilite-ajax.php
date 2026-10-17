@@ -128,7 +128,7 @@ class Audit_Accessibilite_Ajax {
     private function define_ajax_hooks() {
         // Actions pour les utilisateurs connectés
         $this->loader->add_action( 'wp_ajax_start_accessibility_audit', $this, 'start_accessibility_audit' );
-        $this->loader->add_action( 'wp_ajax_run_accessibility_audit', $this, 'run_accessibility_audit' );
+        $this->loader->add_action( 'wp_ajax_audit_accessibilite_run_audit', $this, 'run_accessibility_audit' );
         $this->loader->add_action( 'wp_ajax_export_accessibility_audit_pdf', $this, 'export_accessibility_audit_pdf' );
         $this->loader->add_action( 'wp_ajax_export_accessibility_audit_csv', $this, 'export_accessibility_audit_csv' );
         $this->loader->add_action( 'wp_ajax_get_accessibility_audit_page', $this, 'get_accessibility_audit_page' );
@@ -228,15 +228,8 @@ class Audit_Accessibilite_Ajax {
                 return;
             }
             
-            // S'assurer que form_data est défini
-            if ( empty( $_POST['form_data'] ) ) {
-                wp_send_json_error( array( 'message' => __( 'Données du formulaire manquantes.', 'audit-accessibilite' ) ) );
-                return;
-            }
-
-            // Récupérer les données du formulaire
-            $form_data = array();
-            parse_str( $_POST['form_data'], $form_data );
+            // Récupérer les données du formulaire directement depuis $_POST
+            $form_data = $_POST;
             
             // Vérifier les paramètres obligatoires
             if ( empty( $form_data['audit_target'] ) ) {
@@ -366,19 +359,17 @@ class Audit_Accessibilite_Ajax {
                 }
             }
 
-            // Calculer un score global (pourcentage de conformité)
+            // Calculer un score global : part des tests RGAA réussis, toutes pages confondues
             $score = 0;
             $tests_total = 0;
             $tests_passed = 0;
-            
+
             if ( isset( $all_results['rgaa_issues'] ) ) {
                 try {
-                    $total_rgaa_criteria = $this->rgaa->get_total_criteria_count();
-                    $failed_criteria = is_array($all_results['rgaa_issues']) ? count( $all_results['rgaa_issues'] ) : 0;
-                    $passed_criteria = $total_rgaa_criteria - $failed_criteria;
-                    
-                    $tests_total += $total_rgaa_criteria;
-                    $tests_passed += $passed_criteria;
+                    $counts = $this->rgaa->get_tests_counts();
+
+                    $tests_total += $counts['total'];
+                    $tests_passed += $counts['passed'];
                 } catch (Exception $e) {
                     error_log('Erreur lors du calcul du score RGAA: ' . $e->getMessage());
                 }
@@ -405,6 +396,9 @@ class Audit_Accessibilite_Ajax {
                 try {
                     $audit_id = $this->save_audit_results( $target_url, $response_data );
                     $response_data['audit_id'] = $audit_id;
+                    
+                    // Ajouter l'URL de redirection vers le rapport détaillé
+                    $response_data['redirect_url'] = admin_url('admin.php?page=audit-accessibilite-rapport&id=' . $audit_id);
                 } catch (Exception $e) {
                     error_log('Erreur lors de la sauvegarde des résultats: ' . $e->getMessage());
                 }

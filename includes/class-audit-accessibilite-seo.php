@@ -134,6 +134,11 @@ class Audit_Accessibilite_SEO {
         $visited = array();
         $to_visit = array($start_url);
         
+        // Récupérer les exclusions depuis les paramètres
+        $options = get_option('audit_accessibilite_options', array());
+        $exclusions = isset($options['custom_exclusions']) ? $options['custom_exclusions'] : '';
+        $exclusion_patterns = $this->parse_exclusion_patterns($exclusions);
+        
         // Récupérer le domaine du site
         $site_domain = parse_url($start_url, PHP_URL_HOST);
         error_log('SEO - Domaine du site : ' . $site_domain);
@@ -149,7 +154,7 @@ class Audit_Accessibilite_SEO {
             
             foreach ($posts as $post) {
                 $post_url = get_permalink($post->ID);
-                if (!in_array($post_url, $to_visit)) {
+                if (!in_array($post_url, $to_visit) && !$this->is_url_excluded($post_url, $exclusion_patterns)) {
                     $to_visit[] = $post_url;
                     error_log('SEO - Ajout URL de post : ' . $post_url);
                 }
@@ -160,7 +165,7 @@ class Audit_Accessibilite_SEO {
         $pages = get_pages();
         foreach ($pages as $page) {
             $page_url = get_page_link($page->ID);
-            if (!in_array($page_url, $to_visit)) {
+            if (!in_array($page_url, $to_visit) && !$this->is_url_excluded($page_url, $exclusion_patterns)) {
                 $to_visit[] = $page_url;
                 error_log('SEO - Ajout URL de page : ' . $page_url);
             }
@@ -173,6 +178,12 @@ class Audit_Accessibilite_SEO {
             // Si l'URL a déjà été visitée, passer à la suivante
             if (in_array($current_url, $visited)) {
                 error_log('SEO - URL déjà visitée : ' . $current_url);
+                continue;
+            }
+            
+            // Vérifier si l'URL est exclue
+            if ($this->is_url_excluded($current_url, $exclusion_patterns)) {
+                error_log('SEO - URL exclue : ' . $current_url);
                 continue;
             }
             
@@ -215,7 +226,7 @@ class Audit_Accessibilite_SEO {
                     
                     // Vérifier que l'URL est valide et appartient au même domaine
                     if ($this->is_valid_url($href) && parse_url($href, PHP_URL_HOST) === $site_domain) {
-                        if (!in_array($href, $visited) && !in_array($href, $to_visit)) {
+                        if (!in_array($href, $visited) && !in_array($href, $to_visit) && !$this->is_url_excluded($href, $exclusion_patterns)) {
                             $to_visit[] = $href;
                             error_log('SEO - Nouvelle URL trouvée : ' . $href);
                         }
@@ -228,6 +239,59 @@ class Audit_Accessibilite_SEO {
         
         error_log('SEO - Total des URLs trouvées : ' . count($urls));
         return $urls;
+    }
+    
+    /**
+     * Parse les patterns d'exclusion depuis la configuration
+     *
+     * @since    1.0.0
+     * @param    string    $exclusions    Les exclusions en format texte
+     * @return   array                    Les patterns d'exclusion
+     */
+    private function parse_exclusion_patterns($exclusions) {
+        if (empty($exclusions)) {
+            return array();
+        }
+        
+        $patterns = array();
+        $lines = explode("\n", $exclusions);
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (!empty($line)) {
+                $patterns[] = $line;
+            }
+        }
+        
+        return $patterns;
+    }
+    
+    /**
+     * Vérifie si une URL doit être exclue selon les patterns
+     *
+     * @since    1.0.0
+     * @param    string    $url         L'URL à vérifier
+     * @param    array     $patterns    Les patterns d'exclusion
+     * @return   boolean                True si l'URL doit être exclue
+     */
+    private function is_url_excluded($url, $patterns) {
+        if (empty($patterns)) {
+            return false;
+        }
+        
+        foreach ($patterns as $pattern) {
+            // Vérifier correspondance exacte
+            if (strpos($url, $pattern) !== false) {
+                return true;
+            }
+            
+            // Vérifier avec regex si le pattern commence par /
+            if (strpos($pattern, '/') === 0 && preg_match($pattern, $url)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     /**
@@ -272,7 +336,7 @@ class Audit_Accessibilite_SEO {
      * @return   string            Le contenu HTML de la page
      */
     private function get_page_content($url) {
-        $response = wp_remote_get($url);
+        $response = audit_accessibilite_remote_get($url);
         
         if (is_wp_error($response)) {
             return false;

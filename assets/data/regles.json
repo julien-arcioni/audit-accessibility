@@ -1,0 +1,250 @@
+{
+  "regles": {
+    "image-alt-absent": {
+      "critere": "1.1",
+      "priorite": "high",
+      "titre": "Cette image n'est pas décrite",
+      "explication": "L'image n'a pas d'alternative textuelle : rien ne dit ce qu'elle montre.",
+      "qui_gene": "Les personnes aveugles ou malvoyantes : leur lecteur d'écran annonce « image » ou lit le nom du fichier.",
+      "corriger": [
+        "Ouvrez la page dans l'éditeur et cliquez sur l'image.",
+        "Dans le panneau de droite, remplissez « Texte alternatif » en décrivant ce que montre l'image.",
+        "Si l'image est purement décorative, cochez « Marquer l’image comme étant décorative », juste sous « Texte alternatif »."
+      ],
+      "reflexe": "À chaque image ajoutée, demandez-vous : que perdrait quelqu'un qui ne la voit pas ?",
+      "correction": "directe-ou-guidee"
+    },
+    "image-alt-fichier": {
+      "critere": "1.3",
+      "priorite": "medium",
+      "titre": "La description de cette image est un nom de fichier",
+      "explication": "Le texte alternatif de l'image ressemble à un nom de fichier (par exemple « IMG_2041.jpg ») : il ne dit pas ce que l'image montre.",
+      "qui_gene": "Les personnes aveugles ou malvoyantes : leur lecteur d'écran lit le nom du fichier, qui n'a aucun sens pour elles.",
+      "corriger": [
+        "Ouvrez la page dans l'éditeur et cliquez sur l'image.",
+        "Dans le panneau de droite, remplacez le contenu de « Texte alternatif » par une courte phrase décrivant ce que montre l'image.",
+        "Si l'image est purement décorative, cochez « Marquer l’image comme étant décorative », juste sous « Texte alternatif »."
+      ],
+      "reflexe": "Avant d'ajouter une image, renommez-la et décrivez-la en une phrase, comme à quelqu'un au téléphone.",
+      "correction": "directe-ou-guidee"
+    },
+    "lien-sans-intitule": {
+      "critere": "6.2",
+      "priorite": "high",
+      "titre": "Ce lien n'a pas de texte",
+      "explication": "Le lien ne contient aucun texte ni image décrite : on ne peut pas savoir où il mène.",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran ou la voix : le lien est annoncé « lien » sans autre précision, et ne peut pas être nommé à la voix.",
+      "corriger": [
+        "Ouvrez la page dans l'éditeur et repérez le lien (souvent une icône ou une image cliquable).",
+        "Si c'est un texte, écrivez-y quelques mots qui disent où le lien mène (par exemple « Voir nos tarifs »).",
+        "Si c'est une image, cliquez dessus et remplissez « Texte alternatif » dans le panneau de droite avec la destination du lien.",
+        "Si le lien vient du thème (en-tête, pied de page, menu), ouvrez l'éditeur du site depuis « Apparence », puis « Éditeur », et modifiez-le à cet endroit."
+      ],
+      "reflexe": "Un lien doit se comprendre seul, sorti de son contexte : « Télécharger la plaquette » plutôt qu'une icône muette.",
+      "correction": "guidee"
+    },
+    "lien-generique": {
+      "critere": "6.1",
+      "priorite": "medium",
+      "titre": "L'intitulé de ce lien est trop vague",
+      "explication": "Un intitulé comme « en savoir plus » ou « cliquez ici » ne dit pas où mène le lien, surtout quand on le lit hors de sa phrase.",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran : elles parcourent souvent la liste des liens de la page, où plusieurs « en savoir plus » se ressemblent.",
+      "corriger": [
+        "Ouvrez la page dans l'éditeur et cliquez sur le texte du lien.",
+        "Remplacez-le par un intitulé précis, qui dit où le lien mène (par exemple « Lire l'article sur la livraison » à la place de « Lire la suite »).",
+        "Mettez à jour la page."
+      ],
+      "reflexe": "Relisez chaque lien comme s'il était seul dans une liste : comprend-on où il mène ?",
+      "correction": "directe-ou-guidee"
+    },
+    "titre-document-absent": {
+      "critere": "8.5",
+      "priorite": "high",
+      "titre": "La page n'a pas de titre",
+      "explication": "Le titre de la page (celui qui s'affiche dans l'onglet du navigateur) est absent.",
+      "qui_gene": "Tout le monde, mais surtout les personnes qui utilisent un lecteur d'écran : le titre est la première chose annoncée à l'ouverture de la page, et elles s'en servent pour s'y retrouver parmi plusieurs onglets.",
+      "corriger": [
+        "Pour une page ou un article, ouvrez-le dans l'éditeur et donnez-lui un titre en haut de la page.",
+        "Pour la page d'accueil, ouvrez « Réglages », puis « Général », et remplissez « Titre du site ».",
+        "Si le titre reste absent, le thème du site ne l'affiche pas : demandez à la personne qui gère le thème de corriger cela."
+      ],
+      "reflexe": "Donnez à chaque page un titre unique, qui dit de quoi elle parle.",
+      "correction": "guidee"
+    },
+    "titre-document-court": {
+      "critere": "8.5",
+      "priorite": "high",
+      "titre": "Le titre de la page est trop court",
+      "explication": "Le titre de la page (celui de l'onglet du navigateur) fait moins de 5 caractères : il dit trop peu de chose sur son contenu.",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran, et toutes celles qui ouvrent plusieurs onglets : un titre trop court ne permet pas de reconnaître la page.",
+      "corriger": [
+        "Pour une page ou un article, ouvrez-le dans l'éditeur et rallongez son titre pour qu'il décrive son contenu.",
+        "Pour la page d'accueil, ouvrez « Réglages », puis « Général », et complétez « Titre du site » et « Slogan ».",
+        "Si le titre reste court, il est construit par le thème ou par une extension de référencement : vérifiez leurs réglages."
+      ],
+      "reflexe": "Un bon titre de page tient en quelques mots et se comprend sans voir la page.",
+      "correction": "guidee"
+    },
+    "html-absent": {
+      "critere": "8.3",
+      "priorite": "high",
+      "titre": "La structure de la page est incomplète",
+      "explication": "Le code de la page ne contient pas d'élément de départ « html » : le navigateur ne peut pas lui associer de langue.",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran : sans langue indiquée, la voix de synthèse peut lire le texte avec un mauvais accent, jusqu'à le rendre incompréhensible.",
+      "corriger": [
+        "Ce problème ne se règle pas depuis l'éditeur : il vient du thème du site.",
+        "Vérifiez que le thème est à jour, dans « Apparence », puis « Thèmes ».",
+        "S'il persiste, demandez à la personne qui gère le thème de vérifier le modèle d'en-tête de la page."
+      ],
+      "reflexe": "Après un changement de thème, ouvrez quelques pages et relancez l'analyse.",
+      "correction": "guidee"
+    },
+    "langue-absente": {
+      "critere": "8.3",
+      "priorite": "high",
+      "titre": "La langue de la page n'est pas indiquée",
+      "explication": "La page ne dit pas dans quelle langue elle est écrite.",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran : sans langue indiquée, la voix de synthèse peut lire un texte français avec un accent étranger, jusqu'à le rendre incompréhensible.",
+      "corriger": [
+        "Ouvrez « Réglages », puis « Général ».",
+        "Vérifiez que « Langue du site » est bien « Français », et enregistrez.",
+        "Si le problème persiste, le thème n'écrit pas la langue dans la page : demandez à la personne qui gère le thème de corriger cela."
+      ],
+      "reflexe": "À la création d'un site, choisissez la langue dès les premiers réglages.",
+      "correction": "guidee"
+    },
+    "langue-vide": {
+      "critere": "8.3",
+      "priorite": "high",
+      "titre": "La langue de la page est vide",
+      "explication": "La page a bien un champ « langue », mais il est vide : il ne dit rien.",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran : sans langue indiquée, la voix de synthèse peut lire un texte français avec un accent étranger, jusqu'à le rendre incompréhensible.",
+      "corriger": [
+        "Ouvrez « Réglages », puis « Général ».",
+        "Vérifiez que « Langue du site » est bien « Français », et enregistrez.",
+        "Si le problème persiste, une extension ou le thème écrase la langue : demandez à la personne qui gère le site de le vérifier."
+      ],
+      "reflexe": "Après l'installation d'une extension de traduction, relancez l'analyse.",
+      "correction": "guidee"
+    },
+    "langue-invalide": {
+      "critere": "8.4",
+      "priorite": "medium",
+      "titre": "La langue de la page est mal écrite",
+      "explication": "Le code de langue de la page n'est pas reconnu (par exemple « francais » au lieu de « fr »). Les codes valides sont courts : « fr » ou « fr-FR ».",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran : la voix de synthèse ne sait pas quelle langue employer et choisit la sienne.",
+      "corriger": [
+        "Ouvrez « Réglages », puis « Général ».",
+        "Choisissez « Français » dans « Langue du site » et enregistrez.",
+        "Si le problème persiste, le thème ou une extension écrit un code erroné : demandez à la personne qui gère le site de le corriger."
+      ],
+      "reflexe": "Choisissez la langue dans la liste de WordPress plutôt que de la saisir à la main.",
+      "correction": "guidee"
+    },
+    "titres-absents": {
+      "critere": "9.1",
+      "priorite": "medium",
+      "titre": "La page n'a aucun titre de section",
+      "explication": "Le contenu n'est découpé par aucun titre : c'est un bloc de texte continu, sans repères.",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran : elles se déplacent de titre en titre pour trouver l'information, comme on survole les intertitres d'un journal.",
+      "corriger": [
+        "Ouvrez la page dans l'éditeur.",
+        "Repérez les débuts de parties et cliquez sur la ligne. Dans la barre d'outils du bloc, cliquez sur l'icône du bloc (tout à gauche), puis, sous « Transformer en : », choisissez « Titre ».",
+        "Choisissez le niveau avec « Modifier le niveau », dans la barre d'outils du bloc : un seul « Titre 1 » pour toute la page, des « Titre 2 » pour les parties, des « Titre 3 » pour leurs sous-parties."
+      ],
+      "reflexe": "Écrivez d'abord le plan de la page avec ses titres, puis remplissez chaque partie.",
+      "correction": "guidee"
+    },
+    "h1-absent": {
+      "critere": "9.1",
+      "priorite": "medium",
+      "titre": "La page n'a pas de titre principal",
+      "explication": "Il n'y a pas de titre de niveau 1 : la page n'a pas de titre principal qui annonce son sujet.",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran : le titre principal leur confirme où elles sont et de quoi parle la page.",
+      "corriger": [
+        "Ouvrez la page dans l'éditeur.",
+        "Cliquez sur le titre du haut de la page, puis, dans la barre d'outils du bloc, ouvrez « Modifier le niveau » et choisissez « Titre 1 ».",
+        "Si le titre de la page n'est pas affiché par le thème, ajoutez-le dans l'éditeur du site : ouvrez « Apparence », puis « Éditeur », et vérifiez le modèle de la page."
+      ],
+      "reflexe": "Une page, un seul titre principal, qui dit de quoi elle parle.",
+      "correction": "guidee"
+    },
+    "titres-saut": {
+      "critere": "9.1",
+      "priorite": "medium",
+      "titre": "Un niveau de titre est sauté",
+      "explication": "Les titres passent d'un niveau à un autre en sautant un niveau (par exemple d'un niveau 2 à un niveau 4) : le plan de la page a un trou.",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran : elles se repèrent grâce au plan de la page, et un niveau manquant leur laisse croire qu'une partie a disparu.",
+      "corriger": [
+        "Ouvrez la page dans l'éditeur et cliquez sur le titre signalé.",
+        "Dans la barre d'outils du bloc, ouvrez « Modifier le niveau » et choisissez le niveau qui suit celui du titre précédent (après un « Titre 2 », le suivant est un « Titre 2 » ou un « Titre 3 »).",
+        "Ne choisissez pas un niveau pour sa taille à l'écran : réglez la taille dans le panneau de droite, avec « Taille de police » (rubrique « Typographie »), sans changer le niveau."
+      ],
+      "reflexe": "Les niveaux de titres sont comme un plan : on descend d'un niveau à la fois.",
+      "correction": "guidee"
+    },
+    "champ-sans-etiquette": {
+      "critere": "11.1",
+      "priorite": "high",
+      "titre": "Ce champ n'a pas d'étiquette",
+      "explication": "Rien n'indique ce qu'il faut saisir dans ce champ : le texte grisé à l'intérieur ne suffit pas, il disparaît dès qu'on écrit.",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran, qui entendent seulement « champ de saisie », et celles qui oublient ce qu'elles doivent saisir une fois le texte grisé disparu.",
+      "corriger": [
+        "Ouvrez la page contenant le formulaire dans l'éditeur et cliquez sur le champ.",
+        "Pour le bloc Recherche, activez « Afficher le libellé » dans le panneau de droite, puis écrivez le libellé à la place de « Ajouter un libellé… », au-dessus du champ (par exemple « Rechercher dans la boutique »).",
+        "Si le champ vient d'une extension de formulaire, ouvrez le formulaire dans cette extension et renseignez-y l'étiquette (ou le libellé) du champ, par exemple « Votre adresse e-mail »."
+      ],
+      "reflexe": "Chaque champ a une étiquette visible, placée à côté ou au-dessus.",
+      "correction": "guidee"
+    },
+    "tableau-sans-en-tetes": {
+      "critere": "5.6",
+      "priorite": "medium",
+      "titre": "Ce tableau n'a pas de ligne d'en-tête",
+      "explication": "Le tableau ne dit pas ce que contient chaque colonne : aucune cellule n'est déclarée comme en-tête.",
+      "qui_gene": "Les personnes qui utilisent un lecteur d'écran : en parcourant une cellule, elles n'entendent pas à quelle colonne elle appartient.",
+      "corriger": [
+        "Ouvrez la page dans l'éditeur et cliquez sur le tableau.",
+        "Dans le panneau de droite, activez « Section d’entête ».",
+        "Remplissez les cellules de la première ligne avec le nom de chaque colonne."
+      ],
+      "reflexe": "Un tableau sert à comparer des données : donnez toujours un nom à chaque colonne.",
+      "correction": "guidee"
+    }
+  },
+  "limites": [
+    {
+      "titre": "Le contraste des couleurs",
+      "geste": "Testez le texte et son fond avec un outil de contraste, comme « Colour Contrast Analyser » ou la vérification de contraste de votre navigateur."
+    },
+    {
+      "titre": "La pertinence des textes alternatifs",
+      "geste": "Une description présente peut être fausse ou sans intérêt : relisez chaque texte alternatif en vous demandant s'il remplace bien l'image."
+    },
+    {
+      "titre": "La navigation au clavier",
+      "geste": "Parcourez la page avec la touche Tab : tout doit pouvoir s'atteindre et s'activer, et vous devez toujours voir où vous êtes."
+    },
+    {
+      "titre": "L'ordre de lecture",
+      "geste": "Lisez la page de haut en bas sans les styles, ou avec Tab : l'ordre doit rester logique."
+    },
+    {
+      "titre": "Les vidéos et les sons",
+      "geste": "Vérifiez que chaque vidéo a des sous-titres et une transcription, et chaque son une transcription."
+    },
+    {
+      "titre": "La clarté des textes et des formulaires",
+      "geste": "Relisez les messages d'erreur et les aides : disent-ils clairement ce qui ne va pas et comment le corriger ?"
+    },
+    {
+      "titre": "Les contenus qui bougent ou clignotent",
+      "geste": "Repérez les carrousels, animations et vidéos qui démarrent seuls : on doit pouvoir les arrêter, et rien ne doit clignoter."
+    },
+    {
+      "titre": "Ce qui n'est pas affiché à cette largeur d'écran",
+      "geste": "L'analyse ne vérifie que ce qui est affiché au moment où elle est lancée : un menu mobile replié ou un élément masqué à cette largeur lui échappe. Relancez l'analyse sur téléphone, puis une nouvelle fois menu ouvert."
+    }
+  ],
+  "avertissement": "L'analyse automatique repère certaines erreurs fréquentes. Elle ne remplace pas un audit complet."
+}

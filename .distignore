@@ -1,0 +1,9 @@
+/tests
+/node_modules
+/package.json
+/package-lock.json
+/docs
+/.distignore
+/tests/.resultats/
+/.superpowers
+/.gitignore

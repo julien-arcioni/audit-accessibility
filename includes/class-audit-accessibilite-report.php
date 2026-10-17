@@ -401,6 +401,76 @@ class Audit_Accessibilite_Report {
     }
 
     /**
+     * Détermine l'impact utilisateur selon le type de problème
+     *
+     * @since    1.0.0
+     * @param    string    $issue_description    La description du problème
+     * @param    string    $issue_type          Le type de problème
+     * @return   string                         L'impact utilisateur
+     */
+    private function get_user_impact($issue_description, $issue_type = 'rgaa') {
+        $description_lower = strtolower($issue_description);
+        
+        // Impacts pour les problèmes d'accessibilité
+        if ($issue_type === 'rgaa') {
+            if (strpos($description_lower, 'alt') !== false || strpos($description_lower, 'image') !== false) {
+                return __('Mauvaise compréhension ou perte d\'informations pour les personnes utilisant des lecteurs d\'écrans', 'audit-accessibilite');
+            }
+            if (strpos($description_lower, 'contraste') !== false) {
+                return __('Difficultés de lecture pour les personnes avec une déficience visuelle', 'audit-accessibilite');
+            }
+            if (strpos($description_lower, 'navigation') !== false || strpos($description_lower, 'menu') !== false) {
+                return __('Difficultés de navigation pour les personnes utilisant le clavier ou les technologies d\'assistance', 'audit-accessibilite');
+            }
+            if (strpos($description_lower, 'formulaire') !== false || strpos($description_lower, 'label') !== false) {
+                return __('Difficultés de saisie et de compréhension des formulaires', 'audit-accessibilite');
+            }
+            if (strpos($description_lower, 'titre') !== false || strpos($description_lower, 'heading') !== false) {
+                return __('Difficultés de compréhension de la structure de la page', 'audit-accessibilite');
+            }
+            if (strpos($description_lower, 'lien') !== false || strpos($description_lower, 'link') !== false) {
+                return __('Difficultés de compréhension de la destination des liens', 'audit-accessibilite');
+            }
+            if (strpos($description_lower, 'couleur') !== false) {
+                return __('Informations inaccessibles aux personnes daltoniennes ou malvoyantes', 'audit-accessibilite');
+            }
+            if (strpos($description_lower, 'vidéo') !== false || strpos($description_lower, 'audio') !== false) {
+                return __('Contenu multimédia inaccessible aux personnes sourdes ou malentendantes', 'audit-accessibilite');
+            }
+            return __('Barrière d\'accessibilité pouvant affecter les personnes en situation de handicap', 'audit-accessibilite');
+        }
+        
+        // Impacts pour les problèmes SEO
+        if ($issue_type === 'seo') {
+            if (strpos($description_lower, 'meta') !== false) {
+                return __('Diminution de la visibilité dans les résultats de recherche', 'audit-accessibilite');
+            }
+            if (strpos($description_lower, 'title') !== false || strpos($description_lower, 'titre') !== false) {
+                return __('Moins bonne compréhension du contenu par les moteurs de recherche', 'audit-accessibilite');
+            }
+            return __('Impact négatif sur le référencement naturel', 'audit-accessibilite');
+        }
+        
+        // Impacts pour les problèmes de performance
+        if ($issue_type === 'performance') {
+            if (strpos($description_lower, 'image') !== false || strpos($description_lower, 'optimisation') !== false) {
+                return __('Ralentissement du chargement, frustration des utilisateurs', 'audit-accessibilite');
+            }
+            if (strpos($description_lower, 'cache') !== false) {
+                return __('Temps de chargement plus long, expérience utilisateur dégradée', 'audit-accessibilite');
+            }
+            return __('Dégradation de l\'expérience utilisateur et performances réduites', 'audit-accessibilite');
+        }
+        
+        // Impacts pour les problèmes de sécurité
+        if ($issue_type === 'security') {
+            return __('Risque de sécurité pour les utilisateurs et leurs données', 'audit-accessibilite');
+        }
+        
+        return __('Impact sur l\'expérience utilisateur', 'audit-accessibilite');
+    }
+
+    /**
      * Exporte un rapport dans le format spécifié
      *
      * @since    1.0.0
@@ -441,24 +511,28 @@ class Audit_Accessibilite_Report {
                 $file_path = $reports_dir . '/' . $filename . '.csv';
                 $fp = fopen($file_path, 'w');
                 
-                // En-têtes
+                // En-têtes (suppression de l'ID et ajout de l'Impact utilisateur)
                 fputcsv($fp, array(
                     __('Date', 'audit-accessibilite'),
                     __('URL', 'audit-accessibilite'),
                     __('Catégorie', 'audit-accessibilite'),
                     __('Description', 'audit-accessibilite'),
                     __('Priorité', 'audit-accessibilite'),
+                    __('Impact utilisateur', 'audit-accessibilite'),
                     __('Recommandation', 'audit-accessibilite')
                 ));
                 
                 // Données
                 $issue = maybe_unserialize($report_data['audit_results']);
+                $user_impact = $this->get_user_impact($issue['description'], $report_data['category']);
+                
                 fputcsv($fp, array(
                     $report_data['audit_date'],
                     $report_data['page_url'],
                     $report_data['category'],
                     $issue['description'],
                     $issue['priority'],
+                    $user_impact,
                     $issue['recommendation']
                 ));
                 

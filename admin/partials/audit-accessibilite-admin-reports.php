@@ -41,6 +41,26 @@ if ($table_exists) {
     $total_audits = 0;
     $total_pages = 0;
 }
+
+// Traiter la suppression d'un audit si demandé
+if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $audit_id = intval($_GET['id']);
+    
+    // Vérifier le nonce pour la sécurité
+    if (isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], 'delete_audit_' . $audit_id)) {
+        // Supprimer l'audit
+        $wpdb->delete($audits_table, array('id' => $audit_id), array('%d'));
+        
+        // Rediriger vers la page des rapports sans les paramètres de suppression
+        echo '<script>window.location.href = "' . admin_url('admin.php?page=audit-accessibilite-rapports&deleted=1') . '";</script>';
+        exit;
+    }
+}
+
+// Afficher un message de succès après la suppression
+if (isset($_GET['deleted']) && $_GET['deleted'] == 1) {
+    echo '<div class="notice notice-success is-dismissible"><p>' . __('Le rapport d\'audit a été supprimé avec succès.', 'audit-accessibilite') . '</p></div>';
+}
 ?>
 
 <div class="wrap audit-accessibilite-admin">
@@ -124,9 +144,13 @@ if ($table_exists) {
                                 <button type="button" class="button button-small audit-accessibilite-export-pdf" data-id="<?php echo esc_attr($audit->id); ?>">
                                     <?php _e('PDF', 'audit-accessibilite'); ?>
                                 </button>
-                                <button type="button" class="button button-small audit-accessibilite-export-csv" data-id="<?php echo esc_attr($audit->id); ?>">
+                                <?php // Bouton CSV temporairement désactivé ?>
+                                <?php /* <button type="button" class="button button-small audit-accessibilite-export-csv" data-id="<?php echo esc_attr($audit->id); ?>">
                                     <?php _e('CSV', 'audit-accessibilite'); ?>
-                                </button>
+                                </button> */ ?>
+                                <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin.php?page=audit-accessibilite-rapports&action=delete&id=' . $audit->id), 'delete_audit_' . $audit->id)); ?>" class="button button-small button-link-delete" onclick="return confirm('<?php echo esc_js(__('Êtes-vous sûr de vouloir supprimer ce rapport ? Cette action est irréversible.', 'audit-accessibilite')); ?>');">
+                                    <?php _e('Supprimer', 'audit-accessibilite'); ?>
+                                </a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -142,7 +166,8 @@ if ($table_exists) {
                         'prev_text' => __('&laquo; Précédent', 'audit-accessibilite'),
                         'next_text' => __('Suivant &raquo;', 'audit-accessibilite'),
                         'total' => $total_pages,
-                        'current' => $current_page
+                        'current' => $current_page,
+                        'type' => 'list' // Ça va générer une liste HTML avec des <li>
                     ));
                     ?>
                 </div>
@@ -221,7 +246,7 @@ if ($table_exists) {
 }
 
 .audit-accessibilite-score-fill {
-    background-color: #2271b1;
+    background-color: var(--wp-admin-theme-color, #2271b1);
     color: #fff;
     height: 100%;
     text-align: center;
@@ -232,12 +257,12 @@ if ($table_exists) {
 
 /* Si le score est inférieur à 50%, on change la couleur */
 .audit-accessibilite-score-fill[style*="width: 50"] {
-    background-color: #ffc107;
+    background-color: #dba617;
     color: #000;
 }
 
 .audit-accessibilite-score-fill[style*="width: 100"] {
-    background-color:rgb(15, 142, 18);
+    background-color: #00a32a;
 }
 
 .audit-accessibilite-priority {
@@ -250,7 +275,73 @@ if ($table_exists) {
 }
 
 .audit-accessibilite-priority-high {
-    background-color: #dc3545;
+    background-color: #d63638;
     color: #fff;
 }
-</style> 
+
+/* Style pour la pagination horizontale - version améliorée */
+.audit-accessibilite-pagination {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.audit-accessibilite-pagination .page-numbers {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.audit-accessibilite-pagination .page-numbers li {
+    margin: 0;
+    display: inline-block;
+}
+
+.audit-accessibilite-pagination a,
+.audit-accessibilite-pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    background-color: #fff;
+    color: #333;
+    transition: all 0.2s ease;
+}
+
+.audit-accessibilite-pagination a.prev,
+.audit-accessibilite-pagination a.next {
+    padding: 0 15px;
+}
+
+.audit-accessibilite-pagination span.current {
+    background-color: var(--wp-admin-theme-color, #2271b1);
+    color: #fff;
+}
+
+.audit-accessibilite-pagination a:hover {
+    background-color: #f0f0f1;
+    color: var(--wp-admin-theme-color, #2271b1);
+}
+
+.audit-accessibilite-pagination .page-numbers li:not(:last-child) {
+    border-right: 1px solid #f0f0f1;
+}
+</style>
+
+<script type="text/javascript">
+// Désactiver la gestion d'événement JavaScript pour les liens de pagination
+jQuery(document).ready(function($) {
+    $('.audit-accessibilite-pagination a').off('click');
+});
+</script> 

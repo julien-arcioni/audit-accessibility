@@ -31,6 +31,15 @@ class Audit_Accessibilite_RGAA {
     );
 
     /**
+     * Tests réussis et tests effectués, cumulés sur toutes les pages auditées
+     *
+     * @since    1.1.0
+     * @access   private
+     * @var      array    $tests_counts
+     */
+    private $tests_counts = array('passed' => 0, 'total' => 0);
+
+    /**
      * Exécute un audit d'accessibilité RGAA sur une URL donnée
      *
      * @since    1.0.0
@@ -45,10 +54,21 @@ class Audit_Accessibilite_RGAA {
             return array();
         }
 
+        return $this->analyser_html($html, $url);
+    }
+
+    /**
+     * Analyse un code HTML et renvoie les problèmes RGAA détectés
+     *
+     * @since    1.1.0
+     * @param    string    $html    Le code HTML de la page
+     * @param    string    $url     L'URL de la page
+     * @return   array              Les problèmes, avec les clés rule (identifiant de règle) et path (chemin de l'élément, null pour une règle de page)
+     */
+    public function analyser_html($html, $url = '') {
         try {
             $dom = new DOMDocument();
             $dom->validateOnParse = true;
-            $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>' . htmlspecialchars($html, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '</body></html>';
             @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING);
             $xpath = new DOMXPath($dom);
 
@@ -80,8 +100,9 @@ class Audit_Accessibilite_RGAA {
             // Vérification des tableaux
             $this->check_tables($dom, $xpath, $issues, $tests_passed, $tests_total, $url);
             
-            $score = ($tests_total > 0) ? max(0, round(($tests_passed / $tests_total) * 100)) : 0;
-            
+            $this->tests_counts['passed'] += $tests_passed;
+            $this->tests_counts['total'] += $tests_total;
+
             $formatted_issues = array();
             foreach ($issues as $issue) {
                 $issue_id = isset($issue['id']) ? $issue['id'] : (isset($issue['element_id']) ? $issue['element_id'] : uniqid('rgaa_'));
@@ -102,7 +123,9 @@ class Audit_Accessibilite_RGAA {
                     'status' => 'open',
                     'category' => $issue_category,
                     'criterion' => $issue_criterion,
-                    'solution' => $issue_solution
+                    'solution' => $issue_solution,
+                    'rule' => isset($issue['rule']) ? $issue['rule'] : '',
+                    'path' => isset($issue['path']) ? $issue['path'] : null
                 );
             }
             
@@ -114,10 +137,35 @@ class Audit_Accessibilite_RGAA {
     }
 
     /**
-     * Récupère le nombre total de critères RGAA testés
+     * Texte de recommandation d'une règle, tiré du catalogue
+     *
+     * @since    1.1.0
+     * @param    string    $regle    Identifiant de la règle
+     * @return   string
+     */
+    private function recommandation($regle) {
+        $fiche = Audit_Accessibilite_Catalogue::regle($regle);
+        if (!$fiche) {
+            return '';
+        }
+        return implode(' ', $fiche['corriger']) . ' ' . $fiche['reflexe'];
+    }
+
+    /**
+     * Renvoie les tests réussis et effectués, cumulés sur les pages auditées
+     *
+     * @since    1.1.0
+     * @return   array     Tableau avec les clés passed et total
+     */
+    public function get_tests_counts() {
+        return $this->tests_counts;
+    }
+
+    /**
+     * Ancien calcul du score, conservé pour compatibilité
      *
      * @since    1.0.0
-     * @return   int       Le nombre total de critères RGAA
+     * @return   int       Le nombre de critères RGAA testés
      */
     public function get_total_criteria_count() {
         try {
@@ -164,6 +212,11 @@ class Audit_Accessibilite_RGAA {
         $visited = array();
         $to_visit = array($start_url);
         
+        // Récupérer les exclusions depuis les paramètres
+        $options = get_option('audit_accessibilite_options', array());
+        $exclusions = isset($options['custom_exclusions']) ? $options['custom_exclusions'] : '';
+        $exclusion_patterns = $this->parse_exclusion_patterns($exclusions);
+        
         // Récupérer le domaine du site
         $site_domain = parse_url($start_url, PHP_URL_HOST);
         error_log('RGAA - Domaine du site : ' . $site_domain);
@@ -179,7 +232,7 @@ class Audit_Accessibilite_RGAA {
             
             foreach ($posts as $post) {
                 $post_url = get_permalink($post->ID);
-                if (!in_array($post_url, $to_visit)) {
+                if (!in_array($post_url, $to_visit) && !$this->is_url_excluded($post_url, $exclusion_patterns)) {
                     $to_visit[] = $post_url;
                     error_log('RGAA - Ajout URL de post : ' . $post_url);
                 }
@@ -190,19 +243,28 @@ class Audit_Accessibilite_RGAA {
         $pages = get_pages();
         foreach ($pages as $page) {
             $page_url = get_page_link($page->ID);
-            if (!in_array($page_url, $to_visit)) {
+            if (!in_array($page_url, $to_visit) && !$this->is_url_excluded($page_url, $exclusion_patterns)) {
                 $to_visit[] = $page_url;
                 error_log('RGAA - Ajout URL de page : ' . $page_url);
             }
         }
         
         while (!empty($to_visit)) {
-            $current_url = array_shift($to_visit);
+            $current_url = $this->normalize_crawl_url(array_shift($to_visit), $start_url);
+            if ($current_url === false) {
+                continue;
+            }
             error_log('RGAA - Analyse de l\'URL : ' . $current_url);
             
             // Si l'URL a déjà été visitée, passer à la suivante
             if (in_array($current_url, $visited)) {
                 error_log('RGAA - URL déjà visitée : ' . $current_url);
+                continue;
+            }
+            
+            // Vérifier si l'URL est exclue
+            if ($this->is_url_excluded($current_url, $exclusion_patterns)) {
+                error_log('RGAA - URL exclue : ' . $current_url);
                 continue;
             }
             
@@ -229,23 +291,18 @@ class Audit_Accessibilite_RGAA {
             try {
                 $dom = new DOMDocument();
                 $dom->validateOnParse = true;
-                $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>' . htmlspecialchars($html, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '</body></html>';
                 @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING);
                 $xpath = new DOMXPath($dom);
                 
                 // Récupérer tous les liens
                 $links = $xpath->query('//a[@href]');
                 foreach ($links as $link) {
-                    $href = $link->getAttribute('href');
-                    
-                    // Convertir les URLs relatives en URLs absolues
-                    if (strpos($href, 'http') !== 0) {
-                        $href = $this->make_absolute_url($href, $current_url);
-                    }
-                    
+                    // URL absolue, sans ancre, ni lien d'action, ni fichier (voir normalize_crawl_url)
+                    $href = $this->normalize_crawl_url($link->getAttribute('href'), $current_url);
+
                     // Vérifier que l'URL est valide et appartient au même domaine
-                    if ($this->is_valid_url($href) && parse_url($href, PHP_URL_HOST) === $site_domain) {
-                        if (!in_array($href, $visited) && !in_array($href, $to_visit)) {
+                    if ($href !== false && $this->is_valid_url($href) && parse_url($href, PHP_URL_HOST) === $site_domain) {
+                        if (!in_array($href, $visited) && !in_array($href, $to_visit) && !$this->is_url_excluded($href, $exclusion_patterns)) {
                             $to_visit[] = $href;
                             error_log('RGAA - Nouvelle URL trouvée : ' . $href);
                         }
@@ -261,6 +318,59 @@ class Audit_Accessibilite_RGAA {
     }
     
     /**
+     * Parse les patterns d'exclusion depuis la configuration
+     *
+     * @since    1.0.0
+     * @param    string    $exclusions    Les exclusions en format texte
+     * @return   array                    Les patterns d'exclusion
+     */
+    private function parse_exclusion_patterns($exclusions) {
+        if (empty($exclusions)) {
+            return array();
+        }
+        
+        $patterns = array();
+        $lines = explode("\n", $exclusions);
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (!empty($line)) {
+                $patterns[] = $line;
+            }
+        }
+        
+        return $patterns;
+    }
+    
+    /**
+     * Vérifie si une URL doit être exclue selon les patterns
+     *
+     * @since    1.0.0
+     * @param    string    $url         L'URL à vérifier
+     * @param    array     $patterns    Les patterns d'exclusion
+     * @return   boolean                True si l'URL doit être exclue
+     */
+    private function is_url_excluded($url, $patterns) {
+        if (empty($patterns)) {
+            return false;
+        }
+        
+        foreach ($patterns as $pattern) {
+            // Vérifier correspondance exacte
+            if (strpos($url, $pattern) !== false) {
+                return true;
+            }
+            
+            // Vérifier avec regex si le pattern commence par /
+            if (strpos($pattern, '/') === 0 && preg_match($pattern, $url)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
      * Convertit une URL relative en URL absolue
      *
      * @since    1.0.0
@@ -269,18 +379,75 @@ class Audit_Accessibilite_RGAA {
      * @return   string                 L'URL absolue
      */
     private function make_absolute_url($relative, $base) {
-        if (strpos($relative, '//') === 0) {
-            return 'https:' . $relative;
-        }
-        
-        if (strpos($relative, '/') === 0) {
-            $base_parts = parse_url($base);
-            return $base_parts['scheme'] . '://' . $base_parts['host'] . $relative;
-        }
-        
         $base_parts = parse_url($base);
-        $base_path = isset($base_parts['path']) ? dirname($base_parts['path']) : '/';
-        return $base_parts['scheme'] . '://' . $base_parts['host'] . $base_path . '/' . $relative;
+        $origine = $base_parts['scheme'] . '://' . $base_parts['host'] . (isset($base_parts['port']) ? ':' . $base_parts['port'] : '');
+
+        if (strpos($relative, '//') === 0) {
+            return $base_parts['scheme'] . ':' . $relative;
+        }
+
+        if (strpos($relative, '/') === 0) {
+            return $origine . $relative;
+        }
+
+        if (strpos($relative, '?') === 0) {
+            $chemin = isset($base_parts['path']) ? $base_parts['path'] : '/';
+            return $origine . $chemin . $relative;
+        }
+
+        // Chemin relatif : il se résout depuis le dossier de la page (tout ce qui précède le dernier « / »)
+        $chemin = isset($base_parts['path']) ? $base_parts['path'] : '/';
+        $dossier = substr($chemin, 0, strrpos($chemin, '/') + 1);
+        return $origine . $dossier . $relative;
+    }
+
+    /**
+     * Prépare une URL trouvée dans une page pour l'exploration : URL absolue, sans ancre.
+     * Écarte les liens qui ne mènent pas à une page HTML (mailto:, tel:, fichiers)
+     * et les liens d'action (ajout au panier, déconnexion…) qui modifieraient le site.
+     *
+     * @since    1.1.0
+     * @param    string    $href    L'URL telle qu'écrite dans la page
+     * @param    string    $base    L'URL de la page qui contient le lien
+     * @return   string|false       L'URL à explorer, ou false si elle doit être ignorée
+     */
+    private function normalize_crawl_url($href, $base) {
+        $href = trim($href);
+
+        // Ancre seule, ou protocole qui n'est pas une page web
+        if ($href === '' || $href[0] === '#' || preg_match('/^(mailto|tel|sms|javascript|data|ftp):/i', $href)) {
+            return false;
+        }
+
+        if (!preg_match('#^https?://#i', $href)) {
+            $href = $this->make_absolute_url($href, $base);
+        }
+
+        // L'ancre ne change pas la page
+        $href = preg_replace('/#.*$/', '', $href);
+
+        $parts = parse_url($href);
+        if (!$parts || empty($parts['host'])) {
+            return false;
+        }
+        $chemin = isset($parts['path']) && $parts['path'] !== '' ? $parts['path'] : '/';
+
+        // Fichiers (images, documents, flux) et espaces techniques de WordPress
+        if (preg_match('/\.(jpe?g|png|gif|webp|avif|svg|ico|pdf|zip|docx?|xlsx?|mp4|mp3|webm|css|js|json|xml|txt)$/i', $chemin)
+            || preg_match('#/(wp-admin|wp-login\.php|wp-json|xmlrpc\.php|feed)(/|$)#', $chemin)) {
+            return false;
+        }
+
+        // Liens d'action : les suivre ajouterait au panier, viderait le panier ou déconnecterait l'utilisateur
+        if (isset($parts['query']) && preg_match('/(^|&)(add-to-cart|remove_item|undo_item|removed_item|_wpnonce|action|replytocom|customer-logout)=/', $parts['query'])) {
+            return false;
+        }
+
+        // Une page du site n'est auditée qu'une fois, même liée en http et en https
+        $scheme = $parts['host'] === parse_url(home_url(), PHP_URL_HOST) ? parse_url(home_url(), PHP_URL_SCHEME) : $parts['scheme'];
+
+        return $scheme . '://' . $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '') . $chemin
+            . (isset($parts['query']) ? '?' . $parts['query'] : '');
     }
     
     /**
@@ -302,19 +469,51 @@ class Audit_Accessibilite_RGAA {
      * @return   string            Le contenu HTML de la page
      */
     private function get_page_content($url) {
-        $response = wp_remote_get($url);
+        $response = audit_accessibilite_remote_get($url);
         
         if (is_wp_error($response)) {
             return false;
         }
         
+        // Seules les pages HTML s'auditent (une image ou un PDF n'a ni titre ni langue)
+        $type = wp_remote_retrieve_header($response, 'content-type');
+        if ($type && stripos($type, 'text/html') === false) {
+            return false;
+        }
+
         $html = wp_remote_retrieve_body($response);
-        
+
         if (empty($html)) {
             return false;
         }
-        
+
         return $html;
+    }
+
+    /**
+     * Indique si un attribut est présent, y compris quand l'API Interactivity de WordPress
+     * le remplit dans le navigateur (data-wp-bind--alt, data-wp-bind--aria-label…)
+     *
+     * @since    1.1.0
+     * @param    DOMElement    $element    L'élément
+     * @param    string        $attribut   Le nom de l'attribut
+     * @return   boolean
+     */
+    private function has_attribute_or_binding($element, $attribut) {
+        return $element->hasAttribute($attribut) || $element->hasAttribute('data-wp-bind--' . $attribut);
+    }
+
+    /**
+     * Indique si un élément fait partie d'un gabarit inerte (balise template),
+     * dont le contenu n'est pas affiché tel quel
+     *
+     * @since    1.1.0
+     * @param    DOMXPath      $xpath      L'objet XPath pour les requêtes
+     * @param    DOMElement    $element    L'élément
+     * @return   boolean
+     */
+    private function is_in_template($xpath, $element) {
+        return $xpath->query('ancestor::template', $element)->length > 0;
     }
 
     /**
@@ -331,22 +530,47 @@ class Audit_Accessibilite_RGAA {
         $images = $xpath->query('//img');
         
         foreach ($images as $image) {
+            if ($this->is_in_template($xpath, $image)) {
+                continue;
+            }
             $tests_total++;
             
-            $alt = $image->getAttribute('alt');
+            $alt = trim($image->getAttribute('alt'));
             $src = $image->getAttribute('src');
+            $fichier = basename(parse_url($src, PHP_URL_PATH));
             $element_id = !empty($image->getAttribute('id')) ? $image->getAttribute('id') : md5($src);
-            
-            if (empty($alt) && !$image->hasAttribute('role') && $image->getAttribute('role') !== 'presentation') {
+
+            // Image ignorée des technologies d'assistance : rien à vérifier
+            $decorative = $image->getAttribute('aria-hidden') === 'true'
+                || in_array($image->getAttribute('role'), array('presentation', 'none'), true);
+
+            if (!$decorative && !$this->has_attribute_or_binding($image, 'alt') && !$this->has_attribute_or_binding($image, 'aria-label') && !$image->hasAttribute('aria-labelledby')) {
+                // alt absent (un alt vide est correct pour une image décorative)
                 $issues[] = array(
                     'theme' => 1,
                     'criterion' => 1.1,
                     'element_id' => $element_id,
                     'element_type' => 'img',
-                    'description' => sprintf(__('L\'image %s n\'a pas d\'attribut alt.', 'audit-accessibilite'), $src),
+                    'description' => sprintf(__('L\'image « %s » n\'a pas d\'alternative textuelle (attribut alt absent).', 'audit-accessibilite'), $fichier),
                     'priority' => 'high',
-                    'recommendation' => __('Ajouter un attribut alt à cette image pour décrire son contenu ou utiliser role="presentation" si elle est purement décorative.', 'audit-accessibilite'),
+                    'recommendation' => $this->recommandation('image-alt-absent'),
+                    'rule' => 'image-alt-absent',
+                    'path' => $image->getNodePath(),
                     'page_url' => $page_url // Ajouter l'URL de la page
+                );
+            } else if (!$decorative && $alt !== '' && (strcasecmp($alt, $fichier) === 0 || preg_match('/\.(jpe?g|png|gif|webp|avif|svg)$/i', $alt))) {
+                // alt rempli avec le nom du fichier : présent mais non pertinent
+                $issues[] = array(
+                    'theme' => 1,
+                    'criterion' => 1.3,
+                    'element_id' => $element_id,
+                    'element_type' => 'img',
+                    'description' => sprintf(__('L\'alternative de l\'image « %s » reprend le nom du fichier.', 'audit-accessibilite'), $fichier),
+                    'priority' => 'medium',
+                    'recommendation' => $this->recommandation('image-alt-fichier'),
+                    'rule' => 'image-alt-fichier',
+                    'path' => $image->getNodePath(),
+                    'page_url' => $page_url
                 );
             } else {
                 $tests_passed++;
@@ -394,25 +618,47 @@ class Audit_Accessibilite_RGAA {
      * @param    int            &$tests_total  Référence au compteur de tests total
      */
     private function check_links_text($dom, $xpath, &$issues, &$tests_passed, &$tests_total, $page_url = '') {
-        $links = $xpath->query('//a');
-        
+        $links = $xpath->query('//a[@href]');
+
+        // Intitulés qui ne disent rien de la destination une fois sortis de leur contexte
+        $generiques = array('ici', 'cliquez', 'cliquez ici', 'en savoir plus', 'lire la suite', 'lire plus', 'voir plus', 'voir', 'plus', 'suite', 'lien', 'click', 'click here', 'here', 'read more', 'more');
+
         foreach ($links as $link) {
+            // Lien masqué aux technologies d'assistance : non concerné
+            if ($link->getAttribute('aria-hidden') === 'true' || $this->is_in_template($xpath, $link)) {
+                continue;
+            }
             $tests_total++;
-            
+
             $href = $link->getAttribute('href');
-            $text = trim($link->textContent);
+            $text = $this->get_accessible_name($xpath, $link);
             $element_id = !empty($link->getAttribute('id')) ? $link->getAttribute('id') : md5($href . $text);
-            
-            // Vérifier les liens sans texte ou avec texte trop court/non explicite
-            if (empty($text) || strlen($text) < 3 || in_array(strtolower($text), array('ici', 'cliquez', 'click', 'here', 'lien'))) {
+            $normalise = mb_strtolower(trim($text, " \t\n\r\0\x0B.…›»→"));
+
+            if ($text === '' && !$link->hasAttribute('data-wp-bind--aria-label')) {
+                $issues[] = array(
+                    'theme' => 6,
+                    'criterion' => 6.2,
+                    'element_id' => $element_id,
+                    'element_type' => 'a',
+                    'description' => sprintf(__('Le lien vers « %s » n\'a pas d\'intitulé.', 'audit-accessibilite'), $href),
+                    'priority' => 'high',
+                    'recommendation' => $this->recommandation('lien-sans-intitule'),
+                    'rule' => 'lien-sans-intitule',
+                    'path' => $link->getNodePath(),
+                    'page_url' => $page_url
+                );
+            } else if (in_array($normalise, $generiques, true)) {
                 $issues[] = array(
                     'theme' => 6,
                     'criterion' => 6.1,
                     'element_id' => $element_id,
                     'element_type' => 'a',
-                    'description' => sprintf(__('Le lien "%s" n\'a pas d\'intitulé explicite.', 'audit-accessibilite'), !empty($text) ? $text : $href),
+                    'description' => sprintf(__('Le lien « %1$s » (vers %2$s) n\'est pas explicite hors de son contexte.', 'audit-accessibilite'), $text, $href),
                     'priority' => 'medium',
-                    'recommendation' => __('Fournir un intitulé de lien explicite qui décrit sa fonction ou sa destination.', 'audit-accessibilite'),
+                    'recommendation' => $this->recommandation('lien-generique'),
+                    'rule' => 'lien-generique',
+                    'path' => $link->getNodePath(),
                     'page_url' => $page_url // Ajouter l'URL de la page
                 );
             } else {
@@ -444,7 +690,9 @@ class Audit_Accessibilite_RGAA {
                 'element_type' => 'title',
                 'description' => __('Le document ne possède pas de balise title.', 'audit-accessibilite'),
                 'priority' => 'high',
-                'recommendation' => __('Ajouter une balise title pertinente décrivant le contenu de la page.', 'audit-accessibilite'),
+                'recommendation' => $this->recommandation('titre-document-absent'),
+                    'rule' => 'titre-document-absent',
+                    'path' => null,
                 'page_url' => $page_url // Ajouter l'URL de la page
             );
         } else {
@@ -458,7 +706,9 @@ class Audit_Accessibilite_RGAA {
                     'element_type' => 'title',
                     'description' => __('Le titre du document est vide ou trop court.', 'audit-accessibilite'),
                     'priority' => 'high',
-                    'recommendation' => __('Fournir un titre de document pertinent et suffisamment descriptif.', 'audit-accessibilite'),
+                    'recommendation' => $this->recommandation('titre-document-court'),
+                    'rule' => 'titre-document-court',
+                    'path' => null,
                     'page_url' => $page_url // Ajouter l'URL de la page
                 );
             } else {
@@ -490,7 +740,9 @@ class Audit_Accessibilite_RGAA {
                 'element_type' => 'html',
                 'description' => __('La balise HTML est manquante.', 'audit-accessibilite'),
                 'priority' => 'high',
-                'recommendation' => __('Ajouter une balise html valide avec l\'attribut lang.', 'audit-accessibilite'),
+                'recommendation' => $this->recommandation('html-absent'),
+                    'rule' => 'html-absent',
+                    'path' => null,
                 'page_url' => $page_url
             );
             return;
@@ -504,7 +756,9 @@ class Audit_Accessibilite_RGAA {
                 'element_type' => 'html',
                 'description' => __('La langue de la page n\'est pas définie.', 'audit-accessibilite'),
                 'priority' => 'high',
-                'recommendation' => __('Ajouter l\'attribut lang à la balise html, par exemple : <html lang="fr">.', 'audit-accessibilite'),
+                'recommendation' => $this->recommandation('langue-absente'),
+                    'rule' => 'langue-absente',
+                    'path' => null,
                 'page_url' => $page_url
             );
         } else {
@@ -518,18 +772,23 @@ class Audit_Accessibilite_RGAA {
                     'element_type' => 'html',
                     'description' => __('L\'attribut lang de la page est présent mais vide.', 'audit-accessibilite'),
                     'priority' => 'high',
-                    'recommendation' => __('Définir correctement la valeur de l\'attribut lang (par exemple "fr" pour le français).', 'audit-accessibilite'),
+                    'recommendation' => $this->recommandation('langue-vide'),
+                    'rule' => 'langue-vide',
+                    'path' => null,
                     'page_url' => $page_url
                 );
-            } else if (strtolower($lang) === 'fr-FR') {
+            } else if (!preg_match('/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/', $lang)) {
+                // « fr » comme « fr-FR » sont valides (RGAA 8.4) : seul un code mal formé est signalé
                 $issues[] = array(
                     'theme' => 8,
-                    'criterion' => 8.3,
+                    'criterion' => 8.4,
                     'element_id' => 'html_lang',
                     'element_type' => 'html',
-                    'description' => __('L\'attribut lang utilise "fr-FR" au lieu de "fr".', 'audit-accessibilite'),
-                    'priority' => 'low',
-                    'recommendation' => __('Utiliser "fr" comme valeur de l\'attribut lang pour le français.', 'audit-accessibilite'),
+                    'description' => sprintf(__('Le code de langue « %s » n\'est pas valide.', 'audit-accessibilite'), $lang),
+                    'priority' => 'medium',
+                    'recommendation' => $this->recommandation('langue-invalide'),
+                    'rule' => 'langue-invalide',
+                    'path' => null,
                     'page_url' => $page_url
                 );
             } else {
@@ -550,17 +809,18 @@ class Audit_Accessibilite_RGAA {
      */
     private function check_headings_structure($dom, $xpath, &$issues, &$tests_passed, &$tests_total, $page_url = '') {
         $tests_total++;
-        
+        $issues_before = count($issues);
+
+        // Titres dans l'ordre du document (une requête par niveau les classerait par niveau)
         $headings = array();
-        for ($i = 1; $i <= 6; $i++) {
-            $h_elements = $xpath->query('//h' . $i);
-            foreach ($h_elements as $h) {
-                $headings[] = array(
-                    'level' => $i,
-                    'text' => trim($h->textContent),
-                    'id' => !empty($h->getAttribute('id')) ? $h->getAttribute('id') : md5($i . $h->textContent)
-                );
-            }
+        foreach ($xpath->query('//h1|//h2|//h3|//h4|//h5|//h6') as $h) {
+            $level = (int) substr($h->nodeName, 1);
+            $headings[] = array(
+                'level' => $level,
+                'text' => trim($h->textContent),
+                'node' => $h,
+                'id' => !empty($h->getAttribute('id')) ? $h->getAttribute('id') : md5($level . $h->textContent)
+            );
         }
         
         // Vérifier si des titres sont présents
@@ -572,7 +832,9 @@ class Audit_Accessibilite_RGAA {
                 'element_type' => 'general',
                 'description' => __('Aucun titre (h1-h6) n\'a été trouvé dans la page.', 'audit-accessibilite'),
                 'priority' => 'medium',
-                'recommendation' => __('Structurer le contenu en utilisant des titres de niveaux appropriés (h1-h6).', 'audit-accessibilite'),
+                'recommendation' => $this->recommandation('titres-absents'),
+                    'rule' => 'titres-absents',
+                    'path' => null,
                 'page_url' => $page_url // Ajouter l'URL de la page
             );
             return;
@@ -595,7 +857,9 @@ class Audit_Accessibilite_RGAA {
                 'element_type' => 'h1',
                 'description' => __('Aucun titre de niveau 1 (h1) n\'a été trouvé dans la page.', 'audit-accessibilite'),
                 'priority' => 'medium',
-                'recommendation' => __('Ajouter un titre h1 principal pour décrire le contenu de la page.', 'audit-accessibilite'),
+                'recommendation' => $this->recommandation('h1-absent'),
+                    'rule' => 'h1-absent',
+                    'path' => null,
                 'page_url' => $page_url // Ajouter l'URL de la page
             );
         }
@@ -609,23 +873,25 @@ class Audit_Accessibilite_RGAA {
                     'criterion' => 9.1,
                     'element_id' => $heading['id'],
                     'element_type' => 'h' . $heading['level'],
-                    'description' => sprintf(__('Saut dans la hiérarchie des titres : passage de h%d à h%d.', 'audit-accessibilite'), $previous_level, $heading['level']),
+                    'description' => sprintf(__('Saut dans la hiérarchie des titres : passage de h%1$d à h%2$d (« %3$s »).', 'audit-accessibilite'), $previous_level, $heading['level'], wp_trim_words($heading['text'], 8)),
                     'priority' => 'medium',
-                    'recommendation' => __('Corriger la hiérarchie des titres pour éviter les sauts de niveaux.', 'audit-accessibilite'),
+                    'recommendation' => $this->recommandation('titres-saut'),
+                    'rule' => 'titres-saut',
+                    'path' => $heading['node']->getNodePath(),
                     'page_url' => $page_url // Ajouter l'URL de la page
                 );
             }
             $previous_level = $heading['level'];
         }
         
-        // Si aucun problème trouvé, test réussi
-        if (count($issues) === $tests_total - 1) {
+        // Si aucun problème trouvé sur cette page, test réussi
+        if (count($issues) === $issues_before) {
             $tests_passed++;
         }
     }
 
     /**
-     * Vérifie la présence de formulaires (RGAA 11.1)
+     * Vérifie que chaque champ de formulaire a une étiquette (RGAA 11.1)
      *
      * @since    1.0.0
      * @param    DOMDocument    $dom           L'objet DOM de la page
@@ -635,22 +901,32 @@ class Audit_Accessibilite_RGAA {
      * @param    int            &$tests_total  Référence au compteur de tests total
      */
     private function check_forms($dom, $xpath, &$issues, &$tests_passed, &$tests_total, $page_url = '') {
-        $forms = $xpath->query('//form');
-        
-        foreach ($forms as $form) {
+        // Champs de saisie, hors champs cachés et boutons (qui ont leur propre intitulé)
+        $fields = $xpath->query('//input[not(@type="hidden" or @type="submit" or @type="button" or @type="reset" or @type="image")]|//select|//textarea');
+
+        foreach ($fields as $field) {
+            if ($field->getAttribute('aria-hidden') === 'true' || $field->getAttribute('tabindex') === '-1' || $this->is_in_template($xpath, $field)) {
+                continue;
+            }
             $tests_total++;
-            
-            $element_id = !empty($form->getAttribute('id')) ? $form->getAttribute('id') : md5($form->getAttribute('name'));
-            
-            if (empty($form->getAttribute('name'))) {
+
+            $nom = $field->getAttribute('name') ?: $field->getAttribute('id') ?: $field->nodeName;
+            $element_id = !empty($field->getAttribute('id')) ? $field->getAttribute('id') : md5($nom);
+
+            if ($this->get_field_label($xpath, $field) === '' && !$field->hasAttribute('data-wp-bind--aria-label')) {
+                $placeholder = $field->getAttribute('placeholder');
                 $issues[] = array(
                     'theme' => 11,
                     'criterion' => 11.1,
                     'element_id' => $element_id,
-                    'element_type' => 'form',
-                    'description' => __('Le formulaire n\'a pas d\'attribut name.', 'audit-accessibilite'),
-                    'priority' => 'medium',
-                    'recommendation' => __('Ajouter un attribut name à ce formulaire.', 'audit-accessibilite'),
+                    'element_type' => $field->nodeName,
+                    'description' => $placeholder !== ''
+                        ? sprintf(__('Le champ « %1$s » n\'a pas d\'étiquette : seul son texte indicatif (« %2$s ») le décrit.', 'audit-accessibilite'), $nom, $placeholder)
+                        : sprintf(__('Le champ « %s » n\'a pas d\'étiquette.', 'audit-accessibilite'), $nom),
+                    'priority' => 'high',
+                    'recommendation' => $this->recommandation('champ-sans-etiquette'),
+                    'rule' => 'champ-sans-etiquette',
+                    'path' => $field->getNodePath(),
                     'page_url' => $page_url // Ajouter l'URL de la page
                 );
             } else {
@@ -660,7 +936,80 @@ class Audit_Accessibilite_RGAA {
     }
 
     /**
-     * Vérifie la présence de tableaux (RGAA 12.1)
+     * Calcule le nom accessible d'un élément : aria-labelledby, aria-label,
+     * puis texte et alternatives des images qu'il contient
+     *
+     * @since    1.1.0
+     * @param    DOMXPath      $xpath    L'objet XPath pour les requêtes
+     * @param    DOMElement    $element  L'élément à nommer
+     * @return   string                  Le nom accessible, chaîne vide s'il n'y en a pas
+     */
+    private function get_accessible_name($xpath, $element) {
+        if ($element->hasAttribute('aria-labelledby')) {
+            $textes = array();
+            foreach (preg_split('/\s+/', trim($element->getAttribute('aria-labelledby'))) as $id) {
+                $cible = $xpath->query('//*[@id="' . $id . '"]')->item(0);
+                if ($cible) {
+                    $textes[] = trim($cible->textContent);
+                }
+            }
+            $nom = trim(implode(' ', $textes));
+            if ($nom !== '') {
+                return $nom;
+            }
+        }
+
+        if (trim($element->getAttribute('aria-label')) !== '') {
+            return trim($element->getAttribute('aria-label'));
+        }
+
+        $texte = trim(preg_replace('/\s+/u', ' ', $element->textContent));
+        foreach ($xpath->query('.//img[@alt]', $element) as $image) {
+            $texte .= ' ' . trim($image->getAttribute('alt'));
+        }
+
+        return trim($texte);
+    }
+
+    /**
+     * Retrouve l'étiquette d'un champ de formulaire : aria-labelledby, aria-label,
+     * label associé par for, label parent, puis attribut title
+     *
+     * @since    1.1.0
+     * @param    DOMXPath      $xpath    L'objet XPath pour les requêtes
+     * @param    DOMElement    $field    Le champ
+     * @return   string                  L'étiquette, chaîne vide s'il n'y en a pas
+     */
+    private function get_field_label($xpath, $field) {
+        if ($field->hasAttribute('aria-labelledby') || $field->hasAttribute('aria-label')) {
+            $nom = $this->get_accessible_name($xpath, $field);
+            // Pour un champ, le texte contenu (options d'une liste) n'est pas une étiquette
+            if ($nom !== '' && $nom !== trim(preg_replace('/\s+/u', ' ', $field->textContent))) {
+                return $nom;
+            }
+        }
+
+        $id = $field->getAttribute('id');
+        if ($id !== '') {
+            $label = $xpath->query('//label[@for="' . $id . '"]')->item(0);
+            if ($label && trim($label->textContent) !== '') {
+                return trim($label->textContent);
+            }
+        }
+
+        $parent = $field->parentNode;
+        while ($parent && $parent instanceof DOMElement) {
+            if ($parent->nodeName === 'label' && trim($parent->textContent) !== '') {
+                return trim($parent->textContent);
+            }
+            $parent = $parent->parentNode;
+        }
+
+        return trim($field->getAttribute('title'));
+    }
+
+    /**
+     * Vérifie que les tableaux de données déclarent leurs en-têtes (RGAA 5.6)
      *
      * @since    1.0.0
      * @param    DOMDocument    $dom           L'objet DOM de la page
@@ -670,22 +1019,29 @@ class Audit_Accessibilite_RGAA {
      * @param    int            &$tests_total  Référence au compteur de tests total
      */
     private function check_tables($dom, $xpath, &$issues, &$tests_passed, &$tests_total, $page_url = '') {
-        $tables = $xpath->query('//table');
-        
+        // Tableaux de données : un tableau de mise en forme se déclare avec role="presentation"
+        $tables = $xpath->query('//table[not(@role="presentation" or @role="none")]');
+
         foreach ($tables as $table) {
             $tests_total++;
-            
-            $element_id = !empty($table->getAttribute('id')) ? $table->getAttribute('id') : md5($table->getAttribute('name'));
-            
-            if (empty($table->getAttribute('name'))) {
+
+            $element_id = !empty($table->getAttribute('id')) ? $table->getAttribute('id') : md5($table->C14N());
+            $en_tetes = $xpath->query('.//th|.//*[@role="columnheader" or @role="rowheader"]', $table)->length;
+
+            if ($en_tetes === 0) {
+                $legende = $xpath->query('.//caption', $table)->item(0);
                 $issues[] = array(
-                    'theme' => 12,
-                    'criterion' => 12.1,
+                    'theme' => 5,
+                    'criterion' => 5.6,
                     'element_id' => $element_id,
                     'element_type' => 'table',
-                    'description' => __('Le tableau n\'a pas d\'attribut name.', 'audit-accessibilite'),
+                    'description' => $legende
+                        ? sprintf(__('Le tableau « %s » n\'a aucun en-tête de colonne ou de ligne (balise th).', 'audit-accessibilite'), trim($legende->textContent))
+                        : __('Ce tableau de données n\'a aucun en-tête de colonne ou de ligne (balise th).', 'audit-accessibilite'),
                     'priority' => 'medium',
-                    'recommendation' => __('Ajouter un attribut name à ce tableau.', 'audit-accessibilite'),
+                    'recommendation' => $this->recommandation('tableau-sans-en-tetes'),
+                    'rule' => 'tableau-sans-en-tetes',
+                    'path' => $table->getNodePath(),
                     'page_url' => $page_url // Ajouter l'URL de la page
                 );
             } else {

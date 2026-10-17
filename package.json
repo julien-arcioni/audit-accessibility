@@ -1,0 +1,15 @@
+{
+  "name": "audit-accessibilite-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:php && npm run test:js",
+    "test:php": "bash tests/bin/test-php.sh",
+    "test:js": "node --test tests/js/*.test.mjs",
+    "test:e2e": "node tests/e2e/widget.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "25.0.1",
+    "playwright": "1.48.2"
+  }
+}

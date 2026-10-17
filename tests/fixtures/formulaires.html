@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Page de test</title>
+</head>
+<body>
+<h1>Formulaire</h1>
+<form action="/envoi" method="post">
+<label for="nom">Nom</label>
+<input id="nom" name="nom">
+<label>Courriel <input name="email" type="email"></label>
+<input data-attendu="champ-sans-etiquette" name="tel" placeholder="Téléphone">
+<input data-attendu="champ-sans-etiquette" name="cp">
+<input type="hidden" name="h">
+<input type="submit" value="Envoyer">
+<select name="tri" aria-label="Trier par"><option>Prix</option></select>
+<input name="dyn" data-wp-bind--aria-label="context.nom">
+<textarea data-attendu="champ-sans-etiquette" name="msg"></textarea>
+</form>
+</body>
+</html>

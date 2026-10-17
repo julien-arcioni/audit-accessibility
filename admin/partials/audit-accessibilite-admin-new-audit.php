@@ -77,10 +77,11 @@ $options = wp_parse_args($options, $default_options);
                                     <?php _e('Accessibilité (RGAA 4.1)', 'audit-accessibilite'); ?>
                                 </label><br>
                                 
-                                <label for="check_seo">
+                                <?php // TODO : désactivée ?>
+                                <?php /* <label for="check_seo">
                                     <input type="checkbox" name="check_seo" id="check_seo" value="1" <?php checked(isset($options['seo_check']) && $options['seo_check']); ?> />
                                     <?php _e('Référencement (SEO)', 'audit-accessibilite'); ?>
-                                </label><br>
+                                </label><br> */ ?>
                                 
                                 <label for="check_performance">
                                     <input type="checkbox" name="check_performance" id="check_performance" value="1" <?php checked(isset($options['performance_check']) && $options['performance_check']); ?> />
@@ -152,17 +153,7 @@ $options = wp_parse_args($options, $default_options);
             $('#specific_url_row').hide();
         }
     });
-    
-    if ($('#audit_target').val() === 'page') {
-        $('#specific_url_row').show();
-    }
-    
-    setTimeout(function() {
-        if ($('#audit_target').val() === 'page') {
-            $('#specific_url_row').show();
-        }
-    }, 500);
-    
+
     // Gestion de l'affichage du champ email
     $('#email_report').on('change', function() {
         if ($(this).is(':checked')) {
@@ -171,80 +162,109 @@ $options = wp_parse_args($options, $default_options);
             $('#email_field').hide();
         }
     });
-    
-    // Vérifier l'état initial des cases à cocher
-    if ($('#email_report').is(':checked')) {
-        $('#email_field').show();
-    }
-    
-    // Lancer l'audit
+
+    // Lancement de l'audit
     $('#start-audit').on('click', function() {
-        console.log('Démarrage de l\'audit');
+        var button = $(this);
+        var form = $('#audit-accessibilite-options');
+        var loadingDiv = $('.audit-accessibilite-loading');
+        var errorDiv = $('#audit-accessibilite-error');
         
-        // Masquer les erreurs précédentes
-        $('#audit-accessibilite-error').hide();
+        // Validation
+        var hasCheck = false;
+        form.find('input[type="checkbox"][name^="check_"]').each(function() {
+            if ($(this).is(':checked')) {
+                hasCheck = true;
+                return false;
+            }
+        });
         
-        // Afficher la barre de chargement
-        $('.audit-accessibilite-form .spinner').addClass('is-active');
-        $('.audit-accessibilite-loading').show();
+        if (!hasCheck) {
+            alert('Veuillez sélectionner au moins un critère à vérifier.');
+            return;
+        }
         
-        // Désactiver le bouton pendant l'exécution
-        $(this).prop('disabled', true);
+        // Vérification de l'URL si page spécifique
+        if ($('#audit_target').val() === 'page') {
+            var url = $('#specific_url').val();
+            if (!url || !isValidUrl(url)) {
+                alert('Veuillez entrer une URL valide.');
+                $('#specific_url').focus();
+                return;
+            }
+        }
         
-        // Récupérer les données du formulaire
-        var formData = $('#audit-accessibilite-options').serialize();
-        console.log('Données du formulaire: ', formData);
+        // Afficher le loading
+        button.prop('disabled', true);
+        loadingDiv.show();
+        errorDiv.hide();
         
-        // Requête AJAX
+        // Préparer les données
+        var formData = {
+            action: 'audit_accessibilite_run_audit',
+            nonce: $('#audit_accessibilite_nonce').val(),
+            audit_target: $('#audit_target').val(),
+            specific_url: $('#specific_url').val(),
+            check_rgaa: $('#check_rgaa').is(':checked') ? 1 : 0,
+            // check_seo: $('#check_seo').is(':checked') ? 1 : 0, // Temporairement désactivé
+            check_performance: $('#check_performance').is(':checked') ? 1 : 0,
+            check_security: $('#check_security').is(':checked') ? 1 : 0,
+            save_report: $('#save_report').is(':checked') ? 1 : 0,
+            email_report: $('#email_report').is(':checked') ? 1 : 0,
+            email_address: $('#email_address').val()
+        };
+        
+        console.log('Données envoyées:', formData);
+        
+        // Envoyer la requête AJAX
         $.ajax({
             url: ajaxurl,
             type: 'POST',
-            data: {
-                action: 'run_accessibility_audit',
-                nonce: $('#audit_accessibilite_nonce').val(),
-                form_data: formData
-            },
+            data: formData,
+            timeout: 300000, // 5 minutes
             success: function(response) {
-                console.log('Réponse reçue: ', response);
-                
-                $('.audit-accessibilite-form .spinner').removeClass('is-active');
-                $('.audit-accessibilite-loading').hide();
-                
-                $('#start-audit').prop('disabled', false);
+                console.log('Réponse reçue:', response);
                 
                 if (response.success) {
-                    if (response.data && response.data.audit_id) {
-                        var baseUrl = '<?php echo admin_url('admin.php?page=audit-accessibilite-rapport'); ?>';
-                        window.location.href = baseUrl + '&id=' + response.data.audit_id;
+                    // Rediriger vers la page des rapports ou afficher le résultat
+                    if (response.data.redirect_url) {
+                        window.location.href = response.data.redirect_url;
                     } else {
-                        window.location.href = '<?php echo esc_url(admin_url('admin.php?page=audit-accessibilite-rapports')); ?>';
+                        alert('Audit terminé avec succès !');
+                        location.reload();
                     }
                 } else {
-                    $('#audit-accessibilite-error').show().find('p').text(
-                        response.data && response.data.message 
-                            ? response.data.message 
-                            : '<?php _e('Une erreur inconnue est produite lors de laudit.', 'audit-accessibilite'); ?>'
-                    );
-                    console.error('Erreur dans la réponse: ', response);
+                    errorDiv.find('p').text(response.data.message || 'Erreur inconnue');
+                    errorDiv.show();
                 }
             },
             error: function(xhr, status, error) {
-                console.error('Erreur AJAX: ', {xhr: xhr, status: status, error: error});
+                console.error('Erreur AJAX:', status, error);
+                var message = 'Erreur de communication avec le serveur.';
                 
-                // Masquer le chargement
-                $('.audit-accessibilite-form .spinner').removeClass('is-active');
-                $('.audit-accessibilite-loading').hide();
+                if (status === 'timeout') {
+                    message = 'L\'audit a pris trop de temps. Il se peut qu\'il soit encore en cours d\'exécution en arrière-plan.';
+                }
                 
-                // Réactiver le bouton
-                $('#start-audit').prop('disabled', false);
-                
-                // Afficher l'erreur
-                $('#audit-accessibilite-error').show().find('p').text(
-                    '<?php _e('Une erreur est apparue pendant cette audit. Veuillez réessayer.', 'audit-accessibilite'); ?>'
-                );
+                errorDiv.find('p').text(message);
+                errorDiv.show();
+            },
+            complete: function() {
+                button.prop('disabled', false);
+                loadingDiv.hide();
             }
         });
     });
+    
+    // Fonction utilitaire pour valider les URLs
+    function isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
 })(jQuery);
 </script>
 
@@ -259,7 +279,7 @@ $options = wp_parse_args($options, $default_options);
 .audit-accessibilite-loading {
     padding: 20px;
     background: #f8f9fa;
-    border-left: 4px solid #2271b1;
+    border-left: 4px solid var(--wp-admin-theme-color, #2271b1);
     margin-bottom: 20px;
 }
 
